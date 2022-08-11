@@ -7,6 +7,7 @@ from backend.models import UsersCompared
 from requests.exceptions import HTTPError
 from statistics import mean
 from datetime import datetime
+import configparser
 
 
 def convert_server(server_abbreviation):
@@ -20,6 +21,12 @@ def convert_server(server_abbreviation):
         return 'sea'
     else:
         return None
+
+
+def read_key():
+    config = configparser.ConfigParser()
+    config.read('file.ini')
+    return config['DEFAULT']['key']
 
 
 class ComparedData:
@@ -38,7 +45,7 @@ class GamesTogether(APIView):
 
     def post(self, request):
         users_data = request.data
-        watcher = TftWatcher('RGAPI-0c9c9d5e-a5e3-40b5-9b19-2aa75cf83c65')
+        watcher = TftWatcher(read_key())
 
         try:
             user1 = watcher.summoner.by_name(users_data['server'], users_data['username1'])
