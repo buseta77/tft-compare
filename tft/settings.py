@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/4.0/ref/settings/
 """
 
 from pathlib import Path
+from backend.views import read_key
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -20,7 +21,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-#mo-ab)5!l9om*-4dqg^o&88$w8_-4@@az&gumcn&%4=7v3toz'
+SECRET_KEY = read_key('django-key')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True

@@ -23,10 +23,10 @@ def convert_server(server_abbreviation):
         return None
 
 
-def read_key():
+def read_key(name):
     config = configparser.ConfigParser()
     config.read('file.ini')
-    return config['DEFAULT']['key']
+    return config['DEFAULT'][name]
 
 
 class ComparedData:
@@ -45,7 +45,7 @@ class GamesTogether(APIView):
 
     def post(self, request):
         users_data = request.data
-        watcher = TftWatcher(read_key())
+        watcher = TftWatcher(read_key('key'))
 
         try:
             user1 = watcher.summoner.by_name(users_data['server'], users_data['username1'])
