@@ -1,3 +1,5 @@
+import os
+
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -23,12 +25,6 @@ def convert_server(server_abbreviation):
         return None
 
 
-def read_key(name):
-    config = configparser.ConfigParser()
-    config.read('file.ini')
-    return config['DEFAULT'][name]
-
-
 class ComparedData:
     def __init__(self, avg1, avg2):
         self.avg1 = avg1
@@ -45,7 +41,7 @@ class GamesTogether(APIView):
 
     def post(self, request):
         users_data = request.data
-        watcher = TftWatcher(read_key('key'))
+        watcher = TftWatcher(os.environ.get("RIOT_KEY"))
 
         try:
             user1 = watcher.summoner.by_name(users_data['server'], users_data['username1'])
