@@ -23,7 +23,7 @@ IS_HEROKU = "DYNO" in os.environ
 # See https://docs.djangoproject.com/en/4.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ["SECRET_KEY"]
+SECRET_KEY = os.environ.get("SECRET_KEY")
 
 
 # Generally avoid wildcards(*). However since Heroku router provides hostname validation it is ok
@@ -87,9 +87,13 @@ WSGI_APPLICATION = "tft.wsgi.application"
 MAX_CONN_AGE = 600
 
 DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": os.path.join(BASE_DIR, "db.sqlite3")
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': "d9o1ksect62dr6",
+        'USER': "bvdwkbzpbbsjpx",
+        'PASSWORD': os.environ.get("PASSWORD"),
+        'HOST': "ec2-52-208-164-5.eu-west-1.compute.amazonaws.com",
+        'PORT':  "5432"
     }
 }
 
