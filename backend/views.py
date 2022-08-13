@@ -40,7 +40,7 @@ class GamesTogether(APIView):
         return Response(serializer.data)
 
     def post(self, request):
-        '''users_data = request.data
+        users_data = request.data
         watcher = TftWatcher(os.environ.get("RIOT_KEY"))
 
         try:
@@ -54,7 +54,7 @@ class GamesTogether(APIView):
         user1_placements, user2_placements, matches = [], [], []
 
         #for i in range(len(match_list_user1)):
-        for i in range(60):
+        for i in range(40):
             match = watcher.match.by_id(convert_server(users_data['server']), match_list_user1[i])
             participants = match['metadata']['participants']
             for player in participants:
@@ -66,7 +66,7 @@ class GamesTogether(APIView):
                         if participant['puuid'] == user2['puuid']:
                             user2_placements.append(participant['placement'])
         #for i in range(len(match_list_user2)):
-        for i in range(60):
+        for i in range(40):
             match = watcher.match.by_id(convert_server(users_data['server']), match_list_user2[i])
             participants = match['metadata']['participants']
             for player in participants:
@@ -83,10 +83,10 @@ class GamesTogether(APIView):
         user2_avg = mean(user2_placements)
 
         response_data = ComparedData(avg1=user1_avg, avg2=user2_avg)
-        response_serialized = ComparedDataSerializer(response_data)'''
+        response_serialized = ComparedDataSerializer(response_data)
 
         serializer = UsersComparedSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            return Response(response_serialized.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
