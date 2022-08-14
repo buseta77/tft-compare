@@ -150,6 +150,8 @@ STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 CSRF_TRUSTED_ORIGINS = ["https://tft-comparing.herokuapp.com"]
 
+CORS_ALLOW_ALL_ORIGINS = True
+
 
 # Test Runner Config
 class HerokuDiscoverRunner(DiscoverRunner):
