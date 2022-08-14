@@ -148,6 +148,8 @@ STATICFILES_DIRS = (
 # Enable WhiteNoise's GZip compression of static assets.
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
+CSRF_TRUSTED_ORIGINS = ["https://tft-comparing.herokuapp.com"]
+
 
 # Test Runner Config
 class HerokuDiscoverRunner(DiscoverRunner):
