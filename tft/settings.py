@@ -51,7 +51,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "corsheaders"
 ]
-
+# CorsMiddleware will be removed once backend&frontend both on same domain. also corsheaders above.
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
@@ -151,7 +151,7 @@ STATICFILES_DIRS = (
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 CSRF_TRUSTED_ORIGINS = ["https://tft-comparing.herokuapp.com"]
-
+#cors allow all origins below will be removed once backend&frontend on same domain
 CORS_ALLOW_ALL_ORIGINS = True
 
 

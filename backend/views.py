@@ -1,5 +1,5 @@
 import os
-from rest_framework.views import APIView
+from rest_framework.views import APIView, View
 from rest_framework.response import Response
 from rest_framework import status
 from riotwatcher import TftWatcher
@@ -8,6 +8,7 @@ from backend.models import UsersCompared
 from requests.exceptions import HTTPError
 from statistics import mean
 from datetime import datetime
+from django.shortcuts import render
 
 
 def convert_server(server_abbreviation):
@@ -48,6 +49,11 @@ class ComparedData:
 
 
 # Create your views here
+class Home(View):
+    def get(self, request):
+        return render(request, 'home.html')
+
+
 class GamesTogether(APIView):
     def get(self, request):
         data = UsersCompared.objects.all()
