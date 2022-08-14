@@ -25,4 +25,5 @@ class ComparedDataSerializer(serializers.Serializer):
     user2_total_wins = serializers.IntegerField()
     user1_total_losses = serializers.IntegerField()
     user2_total_losses = serializers.IntegerField()
+    played_together = serializers.IntegerField()
     created = serializers.DateTimeField()

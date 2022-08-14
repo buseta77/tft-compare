@@ -26,7 +26,7 @@ def convert_server(server_abbreviation):
 class ComparedData:
     def __init__(self, user1_avg, user2_avg, user1_first, user2_first, user1_top4, user2_top4, user1_eight,
                  user2_eight, user1_tier, user2_tier, user1_points, user2_points, user1_total_wins, user2_total_wins,
-                 user1_total_losses, user2_total_losses):
+                 user1_total_losses, user2_total_losses, played_together):
         self.user1_avg = user1_avg
         self.user2_avg = user2_avg
         self.user1_first = user1_first
@@ -43,6 +43,7 @@ class ComparedData:
         self.user2_total_wins = user2_total_wins
         self.user1_total_losses = user1_total_losses
         self.user2_total_losses = user2_total_losses
+        self.played_together = played_together
         self.created = datetime.now()
 
 
@@ -66,6 +67,8 @@ class GamesTogether(APIView):
         match_list_user1 = watcher.match.by_puuid(convert_server(users_data['server']), user1['puuid'], count=200)
         match_list_user2 = watcher.match.by_puuid(convert_server(users_data['server']), user2['puuid'], count=200)
         common_match_list = list(set(match_list_user1).intersection(match_list_user2))
+        if not common_match_list:
+            return Response({})
         user1_placements, user2_placements, matches = [], [], []
         user1_first, user1_top4, user1_eight, user2_first, user2_top4, user2_eight = 0, 0, 0, 0, 0, 0
 
@@ -95,15 +98,26 @@ class GamesTogether(APIView):
 
         user1_info = watcher.league.by_summoner(users_data['server'], user1['id'])
         user2_info = watcher.league.by_summoner(users_data['server'], user2['id'])
+        played_together = len(common_match_list)
 
-        user1_tier = user1_info['tier']
-        user2_tier = user2_info['tier']
-        user1_points = user1_info['leaguePoints']
-        user2_points = user2_info['leaguePoints']
-        user1_total_wins = user1_info['wins']
-        user2_total_wins = user2_info['wins']
-        user1_total_losses = user1_info['losses']
-        user2_total_losses = user2_info['losses']
+        try:
+            user1_tier = user1_info[0]['tier']
+            user2_tier = user2_info[0]['tier']
+            user1_points = user1_info[0]['leaguePoints']
+            user2_points = user2_info[0]['leaguePoints']
+            user1_total_wins = user1_info[0]['wins']
+            user2_total_wins = user2_info[0]['wins']
+            user1_total_losses = user1_info[0]['losses']
+            user2_total_losses = user2_info[0]['losses']
+        except IndexError:
+            user1_tier = None
+            user2_tier = None
+            user1_points = None
+            user2_points = None
+            user1_total_wins = None
+            user2_total_wins = None
+            user1_total_losses = None
+            user2_total_losses = None
 
         response_data = ComparedData(user1_avg=user1_avg,
                                      user2_avg=user2_avg,
@@ -120,7 +134,8 @@ class GamesTogether(APIView):
                                      user1_total_wins=user1_total_wins,
                                      user2_total_wins=user2_total_wins,
                                      user1_total_losses=user1_total_losses,
-                                     user2_total_losses=user2_total_losses)
+                                     user2_total_losses=user2_total_losses,
+                                     played_together=played_together)
         response_serialized = ComparedDataSerializer(response_data)
 
         serializer = UsersComparedSerializer(data=request.data)
