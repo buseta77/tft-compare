@@ -51,7 +51,7 @@ class ComparedData:
 # Create your views here
 class Home(View):
     def get(self, request):
-        return render(request, 'home.html')
+        return render(request, 'templates/home.html')
 
 
 class GamesTogether(APIView):
