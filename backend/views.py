@@ -3,7 +3,7 @@ from rest_framework.views import APIView, View
 from rest_framework.response import Response
 from rest_framework import status
 from riotwatcher import TftWatcher
-from backend.serializers import UsersComparedSerializer, ComparedDataSerializer
+from backend.serializers import UsersComparedSerializer
 from backend.models import UsersCompared
 from requests.exceptions import HTTPError
 from statistics import mean
@@ -22,30 +22,6 @@ def convert_server(server_abbreviation):
         return 'sea'
     else:
         return None
-
-
-class ComparedData:
-    def __init__(self, user1_avg, user2_avg, user1_first, user2_first, user1_top4, user2_top4, user1_eight,
-                 user2_eight, user1_tier, user2_tier, user1_points, user2_points, user1_total_wins, user2_total_wins,
-                 user1_total_losses, user2_total_losses, played_together):
-        self.user1_avg = user1_avg
-        self.user2_avg = user2_avg
-        self.user1_first = user1_first
-        self.user2_first = user2_first
-        self.user1_top4 = user1_top4
-        self.user2_top4 = user2_top4
-        self.user1_eight = user1_eight
-        self.user2_eight = user2_eight
-        self.user1_tier = user1_tier
-        self.user2_tier = user2_tier
-        self.user1_points = user1_points
-        self.user2_points = user2_points
-        self.user1_total_wins = user1_total_wins
-        self.user2_total_wins = user2_total_wins
-        self.user1_total_losses = user1_total_losses
-        self.user2_total_losses = user2_total_losses
-        self.played_together = played_together
-        self.created = datetime.now()
 
 
 # Create your views here
@@ -107,14 +83,14 @@ class GamesTogether(APIView):
         played_together = len(common_match_list)
 
         try:
-            user1_tier = user1_info[0]['tier']
-            user2_tier = user2_info[0]['tier']
-            user1_points = user1_info[0]['leaguePoints']
-            user2_points = user2_info[0]['leaguePoints']
-            user1_total_wins = user1_info[0]['wins']
-            user2_total_wins = user2_info[0]['wins']
-            user1_total_losses = user1_info[0]['losses']
-            user2_total_losses = user2_info[0]['losses']
+            user1_tier = str(user1_info[0]['tier'])
+            user2_tier = str(user2_info[0]['tier'])
+            user1_points = int(user1_info[0]['leaguePoints'])
+            user2_points = int(user2_info[0]['leaguePoints'])
+            user1_total_wins = int(user1_info[0]['wins'])
+            user2_total_wins = int(user2_info[0]['wins'])
+            user1_total_losses = int(user1_info[0]['losses'])
+            user2_total_losses = int(user2_info[0]['losses'])
         except IndexError:
             user1_tier = None
             user2_tier = None
@@ -124,28 +100,35 @@ class GamesTogether(APIView):
             user2_total_wins = None
             user1_total_losses = None
             user2_total_losses = None
+        except ValueError:
+            return Response({}, status=status.HTTP_403_FORBIDDEN)
 
-        response_data = ComparedData(user1_avg=user1_avg,
-                                     user2_avg=user2_avg,
-                                     user1_first=user1_first,
-                                     user2_first=user2_first,
-                                     user1_top4=user1_top4,
-                                     user2_top4=user2_top4,
-                                     user1_eight=user1_eight,
-                                     user2_eight=user2_eight,
-                                     user1_tier=user1_tier,
-                                     user2_tier=user2_tier,
-                                     user1_points=user1_points,
-                                     user2_points=user2_points,
-                                     user1_total_wins=user1_total_wins,
-                                     user2_total_wins=user2_total_wins,
-                                     user1_total_losses=user1_total_losses,
-                                     user2_total_losses=user2_total_losses,
-                                     played_together=played_together)
-        response_serialized = ComparedDataSerializer(response_data)
-
+        response_data = {'user1': {
+                                'avg': user1_avg,
+                                'first': user1_first,
+                                'top4': user1_top4,
+                                'eight': user1_eight,
+                                'league': user1_tier,
+                                'points': user1_points,
+                                'total_wins': user1_total_wins,
+                                'total_losses': user1_total_losses,
+                                'pp': f'https://ddragon.leagueoflegends.com/cdn/12.13.1/img/profileicon/{user1["profileIconId"]}.png',
+                                'level': user1['summonerLevel']},
+                         'user2': {
+                                'avg': user2_avg,
+                                'first': user2_first,
+                                'top4': user2_top4,
+                                'eight': user2_eight,
+                                'league': user2_tier,
+                                'points': user2_points,
+                                'total_wins': user2_total_wins,
+                                'total_losses': user2_total_losses,
+                                'pp': f'https://ddragon.leagueoflegends.com/cdn/12.13.1/img/profileicon/{user2["profileIconId"]}.png',
+                                'level': user2['summonerLevel']},
+                         'played_together': played_together,
+                         'created': datetime.now()}
         serializer = UsersComparedSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
-            return Response(response_serialized.data, status=status.HTTP_201_CREATED)
+            return Response(response_data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
