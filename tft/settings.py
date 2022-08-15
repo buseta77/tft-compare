@@ -14,7 +14,7 @@ from pathlib import Path
 
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
-BASE_DIR = Path(__file__).resolve().parent
+BASE_DIR = Path(__file__).resolve().parent.parent
 
 
 IS_HEROKU = "DYNO" in os.environ
@@ -34,9 +34,9 @@ else:
 
 # SECURITY WARNING: don't run with debug turned on in production!
 if not IS_HEROKU:
-    DEBUG = True
-else:
     DEBUG = False
+else:
+    DEBUG = True
 
 # Application definition
 
@@ -148,7 +148,7 @@ STATICFILES_DIRS = [
 
 
 # Enable WhiteNoise's GZip compression of static assets.
-STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+STATICFILES_STORAGE = "whitenoise.storage.CompressedStaticFilesStorage"
 
 CSRF_TRUSTED_ORIGINS = ["https://tft-comparing.herokuapp.com"]
 #cors allow all origins below will be removed once backend&frontend on same domain
