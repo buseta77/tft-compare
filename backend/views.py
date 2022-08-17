@@ -24,6 +24,23 @@ def convert_server(server_abbreviation):
         return None
 
 
+def convert(trait, no):
+    if trait in ["Set7_Astral", "Set7_Ragewing", "Set7_Jade", "Set7_Legend", "Set7_Dragonmancer"]:
+        return no * 3
+    elif trait in ["Set7_Whispers", "Set7_Mirage", "Set7_Scalescorn", "Set7_Tempest", "Set7_Swiftshot",
+                   "Set7_Assassin", "Set7_Bruiser", "Set7_Cannoneer", "Set7_Guardian", "Set7_Evoker",
+                   "Set7_Shapeshifter", "Set7_Warrior", "Set7_Cavalier"]:
+        return no * 2
+    elif trait in ["Set7_Guild", "Set7_Dragon", "Set7_Spell-Thief", "Set7_Starcaller", "Set7_Bard"]:
+        return no
+    elif trait in ["Set7_Shimmerscale", "Set7_Mage"]:
+        return (no * 2) + 1
+    elif trait in ["Set7_Trainer", "Set7_Revel", "Set7_Mystic"]:
+        return no + 1
+    else:
+        return no
+
+
 # Create your views here
 class Home(View):
     def get(self, request):
@@ -51,12 +68,18 @@ class GamesTogether(APIView):
         common_match_list = list(set(match_list_user1).intersection(match_list_user2))
         if not common_match_list:
             return Response({})
-        user1_placements, user2_placements, matches = [], [], []
+        user1_placements, user2_placements, matches, match_lengths = [], [], [], []
         user1_first, user1_top4, user1_eight, user2_first, user2_top4, user2_eight = 0, 0, 0, 0, 0, 0
+        user1_gold_left, user2_gold_left,  = [], []
+        user1_less_5_gold, user1_more_20_gold, user2_less_5_gold, user2_more_20_gold = 0, 0, 0, 0
+        user1_eliminated_list, user2_eliminated_list = [], []
+        user1_total_damage_list, user2_total_damage_list = [], []
+        user1_trait_dict, user2_trait_dict = {}, {}
 
         for elt in common_match_list:
             match = watcher.match.by_id(convert_server(users_data['server']), elt)
             matches.append(match)
+            match_lengths.append(match['info']['game_length'])
             for participant in match['info']['participants']:
                 if participant['puuid'] == user1['puuid']:
                     user1_placements.append(participant['placement'])
@@ -66,6 +89,25 @@ class GamesTogether(APIView):
                         user1_top4 += 1
                     if participant['placement'] == 8:
                         user1_eight += 1
+                    user1_gold_left.append(participant['gold_left'])
+                    if participant['gold_left'] <= 5:
+                        user1_less_5_gold += 1
+                    elif participant['gold_left'] >= 20:
+                        user1_more_20_gold += 1
+                    user1_eliminated_list.append(participant['players_eliminated'])
+                    user1_total_damage_list.append(participant['total_damage_to_players'])
+                    for trait in participant['traits']:
+                        if trait['tier_current'] > 0:
+                            name = trait['name']
+                            tier = convert(name, trait['tier_current'])
+                            if name not in user1_trait_dict.keys():
+                                user1_trait_dict[name] = {tier: 1}
+                            else:
+                                if tier not in user1_trait_dict[name].keys():
+                                    user1_trait_dict[name][tier] = 1
+                                else:
+                                    user1_trait_dict[name][tier] += 1
+
                 if participant['puuid'] == user2['puuid']:
                     user2_placements.append(participant['placement'])
                     if participant['placement'] == 1:
@@ -74,14 +116,85 @@ class GamesTogether(APIView):
                         user2_top4 += 1
                     if participant['placement'] == 8:
                         user2_eight += 1
+                    user2_gold_left.append(participant['gold_left'])
+                    if participant['gold_left'] <= 5:
+                        user2_less_5_gold += 1
+                    elif participant['gold_left'] >= 20:
+                        user2_more_20_gold += 1
+                    user2_eliminated_list.append(participant['players_eliminated'])
+                    user2_total_damage_list.append(participant['total_damage_to_players'])
+                    for trait in participant['traits']:
+                        if trait['tier_current'] > 0:
+                            name = trait['name']
+                            tier = convert(name, trait['tier_current'])
+                            if name not in user2_trait_dict.keys():
+                                user2_trait_dict[name] = {tier: 1}
+                            else:
+                                if tier not in user2_trait_dict[name].keys():
+                                    user2_trait_dict[name][tier] = 1
+                                else:
+                                    user2_trait_dict[name][tier] += 1
 
-        user1_avg = mean(user1_placements)
-        user2_avg = mean(user2_placements)
-
-        user1_info = watcher.league.by_summoner(users_data['server'], user1['id'])
-        user2_info = watcher.league.by_summoner(users_data['server'], user2['id'])
+        user1_avg = round(mean(user1_placements), 2)
+        user2_avg = round(mean(user2_placements), 2)
+        user1_eliminated_avg = round(mean(user1_eliminated_list), 2)
+        user2_eliminated_avg = round(mean(user2_eliminated_list), 2)
+        user1_damage_dealt_avg = round(mean(user1_total_damage_list), 2)
+        user2_damage_dealt_avg = round(mean(user2_total_damage_list), 2)
+        avg_length = round(mean(match_lengths), 2)
         played_together = len(common_match_list)
 
+        # detecting gold lefts
+        user1_gold_left_avg = round(mean(user1_gold_left), 2)
+        if user1_less_5_gold / played_together >= 0.85:
+            if user1_more_20_gold / played_together < 0.1:
+                user1_gold_management = "5/5"
+            else:
+                user1_gold_management = "4/5"
+        elif user1_less_5_gold / played_together >= 0.7:
+            if user1_more_20_gold / played_together < 0.2:
+                user1_gold_management = "4/5"
+            else:
+                user1_gold_management = "3/5"
+        elif user1_less_5_gold / played_together >= 0.55:
+            if user1_more_20_gold / played_together < 0.25:
+                user1_gold_management = "3/5"
+            else:
+                user1_gold_management = "2/5"
+        elif user1_less_5_gold / played_together >= 0.4:
+            if user1_more_20_gold / played_together < 0.15:
+                user1_gold_management = "2/5"
+            else:
+                user1_gold_management = "1/5"
+        else:
+            user1_gold_management = "1/5"
+        user2_gold_left_avg = round(mean(user2_gold_left), 2)
+        if user2_less_5_gold / played_together >= 0.85:
+            if user2_more_20_gold / played_together < 0.1:
+                user2_gold_management = "5/5"
+            else:
+                user2_gold_management = "4/5"
+        elif user2_less_5_gold / played_together >= 0.7:
+            if user2_more_20_gold / played_together < 0.2:
+                user2_gold_management = "4/5"
+            else:
+                user2_gold_management = "3/5"
+        elif user2_less_5_gold / played_together >= 0.55:
+            if user2_more_20_gold / played_together < 0.25:
+                user2_gold_management = "3/5"
+            else:
+                user2_gold_management = "2/5"
+        elif user2_less_5_gold / played_together >= 0.4:
+            if user2_more_20_gold / played_together < 0.15:
+                user2_gold_management = "2/5"
+            else:
+                user2_gold_management = "1/5"
+        else:
+            user2_gold_management = "1/5"
+
+        # general info for users
+        user1_info = watcher.league.by_summoner(users_data['server'], user1['id'])
+        user2_info = watcher.league.by_summoner(users_data['server'], user2['id'])
         try:
             user1_tier = str(user1_info[0]['tier'])
             user2_tier = str(user2_info[0]['tier'])
@@ -112,8 +225,14 @@ class GamesTogether(APIView):
                                 'points': user1_points,
                                 'total_wins': user1_total_wins,
                                 'total_losses': user1_total_losses,
+                                'avg_gold_left': user1_gold_left_avg,
+                                'gold_management': user1_gold_management,
+                                'how_many_eliminated': user1_eliminated_avg,
+                                'damage_dealt_avg': user1_damage_dealt_avg,
                                 'pp': f'https://ddragon.leagueoflegends.com/cdn/12.13.1/img/profileicon/{user1["profileIconId"]}.png',
-                                'level': user1['summonerLevel']},
+                                'level': user1['summonerLevel'],
+                                'username': users_data['username1'],
+                                'traits': user1_trait_dict},
                          'user2': {
                                 'avg': user2_avg,
                                 'first': user2_first,
@@ -123,9 +242,16 @@ class GamesTogether(APIView):
                                 'points': user2_points,
                                 'total_wins': user2_total_wins,
                                 'total_losses': user2_total_losses,
+                                'avg_gold_left': user2_gold_left_avg,
+                                'gold_management': user2_gold_management,
+                                'how_many_eliminated': user2_eliminated_avg,
+                                'damage_dealt_avg': user2_damage_dealt_avg,
                                 'pp': f'https://ddragon.leagueoflegends.com/cdn/12.13.1/img/profileicon/{user2["profileIconId"]}.png',
-                                'level': user2['summonerLevel']},
+                                'level': user2['summonerLevel'],
+                                'username': users_data['username2'],
+                                'traits': user2_trait_dict},
                          'played_together': played_together,
+                         'avg_length': avg_length,
                          'created': datetime.now()}
         serializer = UsersComparedSerializer(data=request.data)
         if serializer.is_valid():

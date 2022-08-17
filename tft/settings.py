@@ -12,10 +12,8 @@ import os
 from django.test.runner import DiscoverRunner
 from pathlib import Path
 
-
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = Path(__file__).resolve().parent.parent
-
 
 IS_HEROKU = "DYNO" in os.environ
 
@@ -24,7 +22,6 @@ IS_HEROKU = "DYNO" in os.environ
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ.get("SECRET_KEY")
-
 
 # Generally avoid wildcards(*). However since Heroku router provides hostname validation it is ok
 if IS_HEROKU:
@@ -39,7 +36,6 @@ else:
     DEBUG = True
 
 # Application definition
-
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
@@ -51,6 +47,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "corsheaders"
 ]
+
 # CorsMiddleware will be removed once backend&frontend both on same domain. also corsheaders above.
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -84,11 +81,8 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "tft.wsgi.application"
 
-
 # Database
 # https://docs.djangoproject.com/en/4.0/ref/settings/#databases
-
-MAX_CONN_AGE = 600
 
 DATABASES = {
     'default': {
@@ -104,7 +98,7 @@ DATABASES = {
 if "DATABASE_URL" in os.environ:
     # Configure Django for DATABASE_URL environment variable.
     DATABASES["default"] = dj_database_url.config(
-        conn_max_age=MAX_CONN_AGE, ssl_require=True)
+        conn_max_age=600, ssl_require=True)
 
     # Enable test database if found in CI environment.
     if "CI" in os.environ:
@@ -113,16 +107,22 @@ if "DATABASE_URL" in os.environ:
 
 # Password validation
 # https://docs.djangoproject.com/en/4.0/ref/settings/#auth-password-validators
-
 AUTH_PASSWORD_VALIDATORS = [
-    {
-        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"
-    },
+    {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
     {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
     {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
 
+# below commented-out settings makes api to be displayed as default json data (raw, json, headers, etc.)
+'''REST_FRAMEWORK = {
+    'DEFAULT_RENDERER_CLASSES': [
+        'rest_framework.renderers.JSONRenderer',
+    ],
+    'DEFAULT_PARSER_CLASSES': [
+        'rest_framework.parsers.JSONParser',
+    ]
+}'''
 
 # Internationalization
 # https://docs.djangoproject.com/en/4.0/topics/i18n/
@@ -151,7 +151,7 @@ STATICFILES_DIRS = [
 STATICFILES_STORAGE = "whitenoise.storage.CompressedStaticFilesStorage"
 
 CSRF_TRUSTED_ORIGINS = ["https://tft-comparing.herokuapp.com"]
-#cors allow all origins below will be removed once backend&frontend on same domain
+# CORS allow all origins below will be removed once backend&frontend on same domain
 CORS_ALLOW_ALL_ORIGINS = True
 
 
