@@ -1,14 +1,15 @@
+import json
 import os
 from rest_framework.views import APIView, View
 from rest_framework.response import Response
 from rest_framework import status
 from riotwatcher import TftWatcher
-from backend.serializers import UsersComparedSerializer
-from backend.models import UsersCompared
+from backend.serializers import UsersComparedSerializer, MatchInfoSerializer
+from backend.models import UsersCompared, MatchInfo
 from requests.exceptions import HTTPError
 from statistics import mean
-from datetime import datetime
 from django.shortcuts import render
+from datetime import datetime
 
 
 def convert_server(server_abbreviation):
@@ -41,6 +42,14 @@ def convert(trait, no):
         return no
 
 
+class NewMatch:
+    def __init__(self, match_id, server, data):
+        self.match_id = match_id
+        self.server = server
+        self.match_data = data
+        self.created_at = datetime.now()
+
+
 # Create your views here
 class Home(View):
     def get(self, request):
@@ -59,16 +68,19 @@ class GamesTogether(APIView):
 
         try:
             user1 = watcher.summoner.by_name(users_data['server'], users_data['username1'])
-            user2 = watcher.summoner.by_name(users_data['server'], users_data['username2'])
         except HTTPError:
             return Response({}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            user2 = watcher.summoner.by_name(users_data['server'], users_data['username2'])
+        except HTTPError:
+            return Response({}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
         match_list_user1 = watcher.match.by_puuid(convert_server(users_data['server']), user1['puuid'], count=200)
         match_list_user2 = watcher.match.by_puuid(convert_server(users_data['server']), user2['puuid'], count=200)
         common_match_list = list(set(match_list_user1).intersection(match_list_user2))
         if not common_match_list:
-            return Response({})
-        user1_placements, user2_placements, matches, match_lengths = [], [], [], []
+            return Response({}, status=status.HTTP_404_NOT_FOUND)
+        user1_placements, user2_placements, match_lengths = [], [], []
         user1_first, user1_top4, user1_eight, user2_first, user2_top4, user2_eight = 0, 0, 0, 0, 0, 0
         user1_gold_left, user2_gold_left,  = [], []
         user1_less_5_gold, user1_more_20_gold, user2_less_5_gold, user2_more_20_gold = 0, 0, 0, 0
@@ -77,8 +89,16 @@ class GamesTogether(APIView):
         user1_trait_dict, user2_trait_dict = {}, {}
 
         for elt in common_match_list:
-            match = watcher.match.by_id(convert_server(users_data['server']), elt)
-            matches.append(match)
+            game = MatchInfo.game_exists(elt, convert_server(users_data['server']))
+            if game:
+                match = json.loads(game)
+            else:
+                match = watcher.match.by_id(convert_server(users_data['server']), elt)
+                new_match = {'match_id': str(elt), 'server': str(convert_server(users_data['server'])),
+                             'match_data': json.dumps(match), 'created_at': datetime.utcnow()}
+                new_match_serializer = MatchInfoSerializer(data=new_match)
+                if new_match_serializer.is_valid():
+                    new_match_serializer.save()
             match_lengths.append(match['info']['game_length'])
             for participant in match['info']['participants']:
                 if participant['puuid'] == user1['puuid']:
@@ -257,4 +277,4 @@ class GamesTogether(APIView):
         if serializer.is_valid():
             serializer.save()
             return Response(response_data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response(serializer.errors, status=status.HTTP_406_NOT_ACCEPTABLE)
