@@ -13,11 +13,11 @@ from datetime import datetime
 
 
 def convert_server(server_abbreviation):
-    if server_abbreviation in ['euw1', 'eun1', 'ru']:
+    if server_abbreviation in ['euw1', 'eun1', 'ru', 'tr1']:
         return 'europe'
     elif server_abbreviation in ['br1', 'la1', 'la2', 'na1']:
         return 'americas'
-    elif server_abbreviation in ['jp1', 'kr', 'tr1']:
+    elif server_abbreviation in ['jp1', 'kr']:
         return 'asia'
     elif server_abbreviation in ['oc1']:
         return 'sea'
@@ -40,14 +40,6 @@ def convert(trait, no):
         return no + 1
     else:
         return no
-
-
-class NewMatch:
-    def __init__(self, match_id, server, data):
-        self.match_id = match_id
-        self.server = server
-        self.match_data = data
-        self.created_at = datetime.now()
 
 
 # Create your views here
@@ -84,9 +76,12 @@ class GamesTogether(APIView):
         user1_first, user1_top4, user1_eight, user2_first, user2_top4, user2_eight = 0, 0, 0, 0, 0, 0
         user1_gold_left, user2_gold_left,  = [], []
         user1_less_5_gold, user1_more_20_gold, user2_less_5_gold, user2_more_20_gold = 0, 0, 0, 0
-        user1_eliminated_list, user2_eliminated_list = [], []
+        user1_eliminated_list, user1_max_eliminated, user2_eliminated_list, user2_max_eliminated = [], [], [], []
         user1_total_damage_list, user2_total_damage_list = [], []
         user1_trait_dict, user2_trait_dict = {}, {}
+        user1_augment_dict, user2_augment_dict = {}, {}
+        user1_items_dict, user2_items_dict = {}, {}
+        user1_unit_dict, user2_unit_dict = {}, {}
 
         for elt in common_match_list:
             game = MatchInfo.game_exists(elt, convert_server(users_data['server']))
@@ -115,6 +110,7 @@ class GamesTogether(APIView):
                     elif participant['gold_left'] >= 20:
                         user1_more_20_gold += 1
                     user1_eliminated_list.append(participant['players_eliminated'])
+                    user1_max_eliminated.append(8 - int(participant['placement']))
                     user1_total_damage_list.append(participant['total_damage_to_players'])
                     for trait in participant['traits']:
                         if trait['tier_current'] > 0:
@@ -127,6 +123,21 @@ class GamesTogether(APIView):
                                     user1_trait_dict[name][tier] = 1
                                 else:
                                     user1_trait_dict[name][tier] += 1
+                    for augment in participant['augments']:
+                        if augment not in user1_augment_dict.keys():
+                            user1_augment_dict[augment] = 1
+                        else:
+                            user1_augment_dict[augment] += 1
+                    for unit in participant['units']:
+                        if unit['character_id'] not in user1_unit_dict.keys():
+                            user1_unit_dict[unit['character_id']] = 1
+                        else:
+                            user1_unit_dict[unit['character_id']] += 1
+                        for item in unit['itemNames']:
+                            if item not in user1_items_dict.keys():
+                                user1_items_dict[item] = 1
+                            else:
+                                user1_items_dict[item] += 1
 
                 if participant['puuid'] == user2['puuid']:
                     user2_placements.append(participant['placement'])
@@ -142,6 +153,7 @@ class GamesTogether(APIView):
                     elif participant['gold_left'] >= 20:
                         user2_more_20_gold += 1
                     user2_eliminated_list.append(participant['players_eliminated'])
+                    user2_max_eliminated.append(8 - int(participant['placement']))
                     user2_total_damage_list.append(participant['total_damage_to_players'])
                     for trait in participant['traits']:
                         if trait['tier_current'] > 0:
@@ -154,15 +166,44 @@ class GamesTogether(APIView):
                                     user2_trait_dict[name][tier] = 1
                                 else:
                                     user2_trait_dict[name][tier] += 1
+                    for augment in participant['augments']:
+                        if augment not in user2_augment_dict.keys():
+                            user2_augment_dict[augment] = 1
+                        else:
+                            user2_augment_dict[augment] += 1
+                    for unit in participant['units']:
+                        if unit['character_id'] not in user2_unit_dict.keys():
+                            user2_unit_dict[unit['character_id']] = 1
+                        else:
+                            user2_unit_dict[unit['character_id']] += 1
+                        for item in unit['itemNames']:
+                            if item not in user2_items_dict.keys():
+                                user2_items_dict[item] = 1
+                            else:
+                                user2_items_dict[item] += 1
 
         user1_avg = round(mean(user1_placements), 2)
         user2_avg = round(mean(user2_placements), 2)
         user1_eliminated_avg = round(mean(user1_eliminated_list), 2)
         user2_eliminated_avg = round(mean(user2_eliminated_list), 2)
+        user1_eliminate_rate = round(mean(user1_eliminated_list) / mean(user1_max_eliminated), 2)
+        user2_eliminate_rate = round(mean(user2_eliminated_list) / mean(user2_max_eliminated), 2)
         user1_damage_dealt_avg = round(mean(user1_total_damage_list), 2)
         user2_damage_dealt_avg = round(mean(user2_total_damage_list), 2)
         avg_length = round(mean(match_lengths), 2)
         played_together = len(common_match_list)
+        user1_augments = dict(reversed(sorted(user1_augment_dict.items(), key=lambda item: item[1])))
+        while len(user1_augments.keys()) > 5:
+            del user1_augments[list(user1_augments.keys())[-1]]
+        user2_augments = dict(reversed(sorted(user2_augment_dict.items(), key=lambda item: item[1])))
+        while len(user2_augments.keys()) > 5:
+            del user2_augments[list(user2_augments.keys())[-1]]
+        user1_items = dict(reversed(sorted(user1_items_dict.items(), key=lambda item: item[1])))
+        while len(user1_items.keys()) > 3:
+            del user1_items[list(user1_items.keys())[-1]]
+        user2_items = dict(reversed(sorted(user2_items_dict.items(), key=lambda item: item[1])))
+        while len(user2_items.keys()) > 3:
+            del user2_items[list(user2_items.keys())[-1]]
 
         # detecting gold lefts
         user1_gold_left_avg = round(mean(user1_gold_left), 2)
@@ -248,11 +289,15 @@ class GamesTogether(APIView):
                                 'avg_gold_left': user1_gold_left_avg,
                                 'gold_management': user1_gold_management,
                                 'how_many_eliminated': user1_eliminated_avg,
+                                'eliminate_rate': user1_eliminate_rate,
                                 'damage_dealt_avg': user1_damage_dealt_avg,
                                 'pp': f'https://ddragon.leagueoflegends.com/cdn/12.13.1/img/profileicon/{user1["profileIconId"]}.png',
                                 'level': user1['summonerLevel'],
                                 'username': users_data['username1'],
-                                'traits': user1_trait_dict},
+                                'units': user1_unit_dict,
+                                'traits': user1_trait_dict,
+                                'top_augments': user1_augments,
+                                'top_items': user1_items},
                          'user2': {
                                 'avg': user2_avg,
                                 'first': user2_first,
@@ -265,11 +310,15 @@ class GamesTogether(APIView):
                                 'avg_gold_left': user2_gold_left_avg,
                                 'gold_management': user2_gold_management,
                                 'how_many_eliminated': user2_eliminated_avg,
+                                'eliminate_rate': user2_eliminate_rate,
                                 'damage_dealt_avg': user2_damage_dealt_avg,
                                 'pp': f'https://ddragon.leagueoflegends.com/cdn/12.13.1/img/profileicon/{user2["profileIconId"]}.png',
                                 'level': user2['summonerLevel'],
                                 'username': users_data['username2'],
-                                'traits': user2_trait_dict},
+                                'units': user2_unit_dict,
+                                'traits': user2_trait_dict,
+                                'top_augments': user2_augments,
+                                'top_items': user2_items},
                          'played_together': played_together,
                          'avg_length': avg_length,
                          'created': datetime.now()}
