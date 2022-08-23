@@ -183,6 +183,7 @@ class GamesTogether(APIView):
                                 user2_items_dict[item] = 1
                             else:
                                 user2_items_dict[item] += 1
+                    break
 
         user1_avg = round(mean(user1_placements), 2)
         user2_avg = round(mean(user2_placements), 2)
@@ -202,14 +203,14 @@ class GamesTogether(APIView):
         user1_traits = []
         for i in range(len(user1_traits_raw.keys())):
             key = list(user1_traits_raw.keys())[i]
-            user1_traits.append({key: user1_traits_raw[key]})
+            user1_traits.append({'name': key, 'count': user1_traits_raw[key]})
         user2_traits_raw = dict(reversed(sorted(user2_trait_dict.items(), key=lambda item: item[1])))
         while len(user2_traits_raw.keys()) > 5:
             del user2_traits_raw[list(user2_traits_raw.keys())[-1]]
         user2_traits = []
         for i in range(len(user2_traits_raw.keys())):
             key = list(user2_traits_raw.keys())[i]
-            user2_traits.append({key: user2_traits_raw[key]})
+            user2_traits.append({'name': key, 'count': user2_traits_raw[key]})
 
         # user augments
         user1_augments_raw = dict(reversed(sorted(user1_augment_dict.items(), key=lambda item: item[1])))
@@ -218,14 +219,14 @@ class GamesTogether(APIView):
         user1_augments = []
         for i in range(len(user1_augments_raw.keys())):
             key = list(user1_augments_raw.keys())[i]
-            user1_augments.append({key: user1_augments_raw[key]})
+            user1_augments.append({'name': key, 'count': user1_augments_raw[key]})
         user2_augments_raw = dict(reversed(sorted(user2_augment_dict.items(), key=lambda item: item[1])))
         while len(user2_augments_raw.keys()) > 5:
             del user2_augments_raw[list(user2_augments_raw.keys())[-1]]
         user2_augments = []
         for i in range(len(user2_augments_raw.keys())):
             key = list(user2_augments_raw.keys())[i]
-            user2_augments.append({key: user2_augments_raw[key]})
+            user2_augments.append({'name': key, 'count': user2_augments_raw[key]})
 
         # user items
         user1_items_raw = dict(reversed(sorted(user1_items_dict.items(), key=lambda item: item[1])))
@@ -234,14 +235,14 @@ class GamesTogether(APIView):
         user1_items = []
         for i in range(len(user1_items_raw.keys())):
             key = list(user1_items_raw.keys())[i]
-            user1_items.append({key: user1_items_raw[key]})
+            user1_items.append({'name': key, 'count': user1_items_raw[key]})
         user2_items_raw = dict(reversed(sorted(user2_items_dict.items(), key=lambda item: item[1])))
         while len(user2_items_raw.keys()) > 5:
             del user2_items_raw[list(user2_items_raw.keys())[-1]]
         user2_items = []
         for i in range(len(user2_items_raw.keys())):
             key = list(user2_items_raw.keys())[i]
-            user2_items.append({key: user2_items_raw[key]})
+            user2_items.append({'name': key, 'count': user2_items_raw[key]})
 
         # user carriers
         user1_carriers_raw = dict(reversed(sorted(user1_carry_dict.items(), key=lambda item: item[1])))
@@ -250,14 +251,14 @@ class GamesTogether(APIView):
         user1_carriers = []
         for i in range(len(user1_carriers_raw.keys())):
             key = list(user1_carriers_raw.keys())[i]
-            user1_carriers.append({key: user1_carriers_raw[key]})
+            user1_carriers.append({'name': key, 'count': user1_carriers_raw[key]})
         user2_carriers_raw = dict(reversed(sorted(user2_carry_dict.items(), key=lambda item: item[1])))
         while len(user2_carriers_raw.keys()) > 5:
             del user2_carriers_raw[list(user2_carriers_raw.keys())[-1]]
         user2_carriers = []
         for i in range(len(user2_carriers_raw.keys())):
             key = list(user2_carriers_raw.keys())[i]
-            user2_carriers.append({key: user2_carriers_raw[key]})
+            user2_carriers.append({'name': key, 'count': user2_carriers_raw[key]})
 
         # user units
         user1_units_raw = dict(reversed(sorted(user1_unit_dict.items(), key=lambda item: item[1])))
@@ -266,14 +267,14 @@ class GamesTogether(APIView):
         user1_units = []
         for i in range(len(user1_units_raw.keys())):
             key = list(user1_units_raw.keys())[i]
-            user1_units.append({key: user1_units_raw[key]})
+            user1_units.append({'name': key, 'count': user1_units_raw[key]})
         user2_units_raw = dict(reversed(sorted(user2_unit_dict.items(), key=lambda item: item[1])))
         while len(user2_units_raw.keys()) > 5:
             del user2_units_raw[list(user2_units_raw.keys())[-1]]
         user2_units = []
         for i in range(len(user2_units_raw.keys())):
             key = list(user2_units_raw.keys())[i]
-            user2_units.append({key: user2_units_raw[key]})
+            user2_units.append({'name': key, 'count': user2_units_raw[key]})
 
         # detecting gold lefts
         user1_gold_left_avg = round(mean(user1_gold_left), 2)
