@@ -81,7 +81,7 @@ class GamesTogether(APIView):
         user1_trait_dict, user2_trait_dict = {}, {}
         user1_augment_dict, user2_augment_dict = {}, {}
         user1_items_dict, user2_items_dict = {}, {}
-        user1_unit_dict, user2_unit_dict = {}, {}
+        user1_unit_dict, user1_carry_dict, user2_unit_dict, user2_carry_dict = {}, {}, {}, {}
 
         for elt in common_match_list:
             game = MatchInfo.game_exists(elt, convert_server(users_data['server']))
@@ -115,14 +115,10 @@ class GamesTogether(APIView):
                     for trait in participant['traits']:
                         if trait['tier_current'] > 0:
                             name = trait['name']
-                            tier = convert(name, trait['tier_current'])
                             if name not in user1_trait_dict.keys():
-                                user1_trait_dict[name] = {tier: 1}
+                                user1_trait_dict[name] = 1
                             else:
-                                if tier not in user1_trait_dict[name].keys():
-                                    user1_trait_dict[name][tier] = 1
-                                else:
-                                    user1_trait_dict[name][tier] += 1
+                                user1_trait_dict[name] += 1
                     for augment in participant['augments']:
                         if augment not in user1_augment_dict.keys():
                             user1_augment_dict[augment] = 1
@@ -133,6 +129,11 @@ class GamesTogether(APIView):
                             user1_unit_dict[unit['character_id']] = 1
                         else:
                             user1_unit_dict[unit['character_id']] += 1
+                        if len(unit['itemNames']) == 3:
+                            if unit['character_id'] not in user1_carry_dict.keys():
+                                user1_carry_dict[unit['character_id']] = 1
+                            else:
+                                user1_carry_dict[unit['character_id']] += 1
                         for item in unit['itemNames']:
                             if item not in user1_items_dict.keys():
                                 user1_items_dict[item] = 1
@@ -158,14 +159,10 @@ class GamesTogether(APIView):
                     for trait in participant['traits']:
                         if trait['tier_current'] > 0:
                             name = trait['name']
-                            tier = convert(name, trait['tier_current'])
                             if name not in user2_trait_dict.keys():
-                                user2_trait_dict[name] = {tier: 1}
+                                user2_trait_dict[name] = 1
                             else:
-                                if tier not in user2_trait_dict[name].keys():
-                                    user2_trait_dict[name][tier] = 1
-                                else:
-                                    user2_trait_dict[name][tier] += 1
+                                user2_trait_dict[name] += 1
                     for augment in participant['augments']:
                         if augment not in user2_augment_dict.keys():
                             user2_augment_dict[augment] = 1
@@ -176,6 +173,11 @@ class GamesTogether(APIView):
                             user2_unit_dict[unit['character_id']] = 1
                         else:
                             user2_unit_dict[unit['character_id']] += 1
+                        if len(unit['itemNames']) == 3:
+                            if unit['character_id'] not in user2_carry_dict.keys():
+                                user2_carry_dict[unit['character_id']] = 1
+                            else:
+                                user2_carry_dict[unit['character_id']] += 1
                         for item in unit['itemNames']:
                             if item not in user2_items_dict.keys():
                                 user2_items_dict[item] = 1
@@ -186,24 +188,92 @@ class GamesTogether(APIView):
         user2_avg = round(mean(user2_placements), 2)
         user1_eliminated_avg = round(mean(user1_eliminated_list), 2)
         user2_eliminated_avg = round(mean(user2_eliminated_list), 2)
-        user1_eliminate_rate = round(mean(user1_eliminated_list) / mean(user1_max_eliminated), 2)
-        user2_eliminate_rate = round(mean(user2_eliminated_list) / mean(user2_max_eliminated), 2)
+        user1_eliminate_rate = round(sum(user1_eliminated_list) / sum(user1_max_eliminated), 2)
+        user2_eliminate_rate = round(sum(user2_eliminated_list) / sum(user2_max_eliminated), 2)
         user1_damage_dealt_avg = round(mean(user1_total_damage_list), 2)
         user2_damage_dealt_avg = round(mean(user2_total_damage_list), 2)
         avg_length = round(mean(match_lengths), 2)
         played_together = len(common_match_list)
-        user1_augments = dict(reversed(sorted(user1_augment_dict.items(), key=lambda item: item[1])))
-        while len(user1_augments.keys()) > 5:
-            del user1_augments[list(user1_augments.keys())[-1]]
-        user2_augments = dict(reversed(sorted(user2_augment_dict.items(), key=lambda item: item[1])))
-        while len(user2_augments.keys()) > 5:
-            del user2_augments[list(user2_augments.keys())[-1]]
-        user1_items = dict(reversed(sorted(user1_items_dict.items(), key=lambda item: item[1])))
-        while len(user1_items.keys()) > 3:
-            del user1_items[list(user1_items.keys())[-1]]
-        user2_items = dict(reversed(sorted(user2_items_dict.items(), key=lambda item: item[1])))
-        while len(user2_items.keys()) > 3:
-            del user2_items[list(user2_items.keys())[-1]]
+
+        # user traits
+        user1_traits_raw = dict(reversed(sorted(user1_trait_dict.items(), key=lambda item: item[1])))
+        while len(user1_traits_raw.keys()) > 5:
+            del user1_traits_raw[list(user1_traits_raw.keys())[-1]]
+        user1_traits = []
+        for i in range(len(user1_traits_raw.keys())):
+            key = list(user1_traits_raw.keys())[i]
+            user1_traits.append({key: user1_traits_raw[key]})
+        user2_traits_raw = dict(reversed(sorted(user2_trait_dict.items(), key=lambda item: item[1])))
+        while len(user2_traits_raw.keys()) > 5:
+            del user2_traits_raw[list(user2_traits_raw.keys())[-1]]
+        user2_traits = []
+        for i in range(len(user2_traits_raw.keys())):
+            key = list(user2_traits_raw.keys())[i]
+            user2_traits.append({key: user2_traits_raw[key]})
+
+        # user augments
+        user1_augments_raw = dict(reversed(sorted(user1_augment_dict.items(), key=lambda item: item[1])))
+        while len(user1_augments_raw.keys()) > 5:
+            del user1_augments_raw[list(user1_augments_raw.keys())[-1]]
+        user1_augments = []
+        for i in range(len(user1_augments_raw.keys())):
+            key = list(user1_augments_raw.keys())[i]
+            user1_augments.append({key: user1_augments_raw[key]})
+        user2_augments_raw = dict(reversed(sorted(user2_augment_dict.items(), key=lambda item: item[1])))
+        while len(user2_augments_raw.keys()) > 5:
+            del user2_augments_raw[list(user2_augments_raw.keys())[-1]]
+        user2_augments = []
+        for i in range(len(user2_augments_raw.keys())):
+            key = list(user2_augments_raw.keys())[i]
+            user2_augments.append({key: user2_augments_raw[key]})
+
+        # user items
+        user1_items_raw = dict(reversed(sorted(user1_items_dict.items(), key=lambda item: item[1])))
+        while len(user1_items_raw.keys()) > 5:
+            del user1_items_raw[list(user1_items_raw.keys())[-1]]
+        user1_items = []
+        for i in range(len(user1_items_raw.keys())):
+            key = list(user1_items_raw.keys())[i]
+            user1_items.append({key: user1_items_raw[key]})
+        user2_items_raw = dict(reversed(sorted(user2_items_dict.items(), key=lambda item: item[1])))
+        while len(user2_items_raw.keys()) > 5:
+            del user2_items_raw[list(user2_items_raw.keys())[-1]]
+        user2_items = []
+        for i in range(len(user2_items_raw.keys())):
+            key = list(user2_items_raw.keys())[i]
+            user2_items.append({key: user2_items_raw[key]})
+
+        # user carriers
+        user1_carriers_raw = dict(reversed(sorted(user1_carry_dict.items(), key=lambda item: item[1])))
+        while len(user1_carriers_raw.keys()) > 5:
+            del user1_carriers_raw[list(user1_carriers_raw.keys())[-1]]
+        user1_carriers = []
+        for i in range(len(user1_carriers_raw.keys())):
+            key = list(user1_carriers_raw.keys())[i]
+            user1_carriers.append({key: user1_carriers_raw[key]})
+        user2_carriers_raw = dict(reversed(sorted(user2_carry_dict.items(), key=lambda item: item[1])))
+        while len(user2_carriers_raw.keys()) > 5:
+            del user2_carriers_raw[list(user2_carriers_raw.keys())[-1]]
+        user2_carriers = []
+        for i in range(len(user2_carriers_raw.keys())):
+            key = list(user2_carriers_raw.keys())[i]
+            user2_carriers.append({key: user2_carriers_raw[key]})
+
+        # user units
+        user1_units_raw = dict(reversed(sorted(user1_unit_dict.items(), key=lambda item: item[1])))
+        while len(user1_units_raw.keys()) > 5:
+            del user1_units_raw[list(user1_units_raw.keys())[-1]]
+        user1_units = []
+        for i in range(len(user1_units_raw.keys())):
+            key = list(user1_units_raw.keys())[i]
+            user1_units.append({key: user1_units_raw[key]})
+        user2_units_raw = dict(reversed(sorted(user2_unit_dict.items(), key=lambda item: item[1])))
+        while len(user2_units_raw.keys()) > 5:
+            del user2_units_raw[list(user2_units_raw.keys())[-1]]
+        user2_units = []
+        for i in range(len(user2_units_raw.keys())):
+            key = list(user2_units_raw.keys())[i]
+            user2_units.append({key: user2_units_raw[key]})
 
         # detecting gold lefts
         user1_gold_left_avg = round(mean(user1_gold_left), 2)
@@ -294,10 +364,11 @@ class GamesTogether(APIView):
                                 'pp': f'https://ddragon.leagueoflegends.com/cdn/12.13.1/img/profileicon/{user1["profileIconId"]}.png',
                                 'level': user1['summonerLevel'],
                                 'username': users_data['username1'],
-                                'units': user1_unit_dict,
-                                'traits': user1_trait_dict,
+                                'top_units': user1_units,
+                                'top_traits': user1_traits,
                                 'top_augments': user1_augments,
-                                'top_items': user1_items},
+                                'top_items': user1_items,
+                                'top_carriers': user1_carriers},
                          'user2': {
                                 'avg': user2_avg,
                                 'first': user2_first,
@@ -315,10 +386,11 @@ class GamesTogether(APIView):
                                 'pp': f'https://ddragon.leagueoflegends.com/cdn/12.13.1/img/profileicon/{user2["profileIconId"]}.png',
                                 'level': user2['summonerLevel'],
                                 'username': users_data['username2'],
-                                'units': user2_unit_dict,
-                                'traits': user2_trait_dict,
+                                'top_units': user2_units,
+                                'top_traits': user2_traits,
                                 'top_augments': user2_augments,
-                                'top_items': user2_items},
+                                'top_items': user2_items,
+                                'top_carriers': user2_carriers},
                          'played_together': played_together,
                          'avg_length': avg_length,
                          'created': datetime.now()}
