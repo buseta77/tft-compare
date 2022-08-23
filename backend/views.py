@@ -183,7 +183,6 @@ class GamesTogether(APIView):
                                 user2_items_dict[item] = 1
                             else:
                                 user2_items_dict[item] += 1
-                    break
 
         user1_avg = round(mean(user1_placements), 2)
         user2_avg = round(mean(user2_placements), 2)
