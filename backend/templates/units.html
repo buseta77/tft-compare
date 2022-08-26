@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+{% load static %}
+
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{unit}}</title>
+</head>
+<body>
+    {% with 'units/'|add:unit|add:'.png' as image_static %}
+      <img src="{% static image_static %}" alt="{{unit}}">
+    {% endwith %}
+</body>
+</html>

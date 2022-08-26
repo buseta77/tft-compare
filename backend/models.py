@@ -1,3 +1,5 @@
+import json
+
 from django.db import models
 from django.core.exceptions import ObjectDoesNotExist
 
@@ -24,3 +26,38 @@ class MatchInfo(models.Model):
             return data
         except ObjectDoesNotExist:
             return None
+
+
+class StaticInfo(models.Model):
+    data = models.CharField(max_length=999999)
+    info = models.CharField(max_length=50)
+
+    @staticmethod
+    def get_champ_name(champion_id):
+        raw_data = StaticInfo.objects.get(info='set7-champions')
+        data = getattr(raw_data, "data")
+        data_json = json.loads(data)
+        for item in data_json:
+            if item['championId'] == champion_id:
+                return item['name']
+        return None
+
+    @staticmethod
+    def get_item_name(item_id):
+        raw_data = StaticInfo.objects.get(info='set7-items')
+        data = getattr(raw_data, "data")
+        data_json = json.loads(data)
+        for item in data_json:
+            if item['id'] == item_id:
+                return item['name']
+        return None
+
+    @staticmethod
+    def get_trait_name(trait_id):
+        raw_data = StaticInfo.objects.get(info='set7-traits')
+        data = getattr(raw_data, "data")
+        data_json = json.loads(data)
+        for item in data_json:
+            if item['key'] == trait_id:
+                return item['name']
+        return None

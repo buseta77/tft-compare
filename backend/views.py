@@ -5,10 +5,11 @@ from rest_framework.response import Response
 from rest_framework import status
 from riotwatcher import TftWatcher
 from backend.serializers import UsersComparedSerializer, MatchInfoSerializer
-from backend.models import UsersCompared, MatchInfo
+from backend.models import UsersCompared, MatchInfo, StaticInfo
 from requests.exceptions import HTTPError
 from statistics import mean
 from django.shortcuts import render
+from django.http import FileResponse
 from datetime import datetime
 
 
@@ -114,31 +115,33 @@ class GamesTogether(APIView):
                     user1_total_damage_list.append(participant['total_damage_to_players'])
                     for trait in participant['traits']:
                         if trait['tier_current'] > 0:
-                            name = trait['name']
-                            if name not in user1_trait_dict.keys():
-                                user1_trait_dict[name] = 1
+                            trait2 = StaticInfo.get_trait_name(trait['name'])
+                            if trait2 not in user1_trait_dict.keys():
+                                user1_trait_dict[trait2] = 1
                             else:
-                                user1_trait_dict[name] += 1
+                                user1_trait_dict[trait2] += 1
                     for augment in participant['augments']:
                         if augment not in user1_augment_dict.keys():
                             user1_augment_dict[augment] = 1
                         else:
                             user1_augment_dict[augment] += 1
                     for unit in participant['units']:
-                        if unit['character_id'] not in user1_unit_dict.keys():
-                            user1_unit_dict[unit['character_id']] = 1
+                        champ = StaticInfo.get_champ_name(unit['character_id'])
+                        if champ not in user1_unit_dict.keys():
+                            user1_unit_dict[champ] = 1
                         else:
-                            user1_unit_dict[unit['character_id']] += 1
+                            user1_unit_dict[champ] += 1
                         if len(unit['itemNames']) == 3:
-                            if unit['character_id'] not in user1_carry_dict.keys():
-                                user1_carry_dict[unit['character_id']] = 1
+                            if champ not in user1_carry_dict.keys():
+                                user1_carry_dict[champ] = 1
                             else:
-                                user1_carry_dict[unit['character_id']] += 1
+                                user1_carry_dict[champ] += 1
                         for item in unit['itemNames']:
-                            if item not in user1_items_dict.keys():
-                                user1_items_dict[item] = 1
+                            item2 = StaticInfo.get_item_name(item)
+                            if item2 not in user1_items_dict.keys():
+                                user1_items_dict[item2] = 1
                             else:
-                                user1_items_dict[item] += 1
+                                user1_items_dict[item2] += 1
 
                 if participant['puuid'] == user2['puuid']:
                     user2_placements.append(participant['placement'])
@@ -158,31 +161,33 @@ class GamesTogether(APIView):
                     user2_total_damage_list.append(participant['total_damage_to_players'])
                     for trait in participant['traits']:
                         if trait['tier_current'] > 0:
-                            name = trait['name']
-                            if name not in user2_trait_dict.keys():
-                                user2_trait_dict[name] = 1
+                            trait2 = StaticInfo.get_trait_name(trait['name'])
+                            if trait2 not in user2_trait_dict.keys():
+                                user2_trait_dict[trait2] = 1
                             else:
-                                user2_trait_dict[name] += 1
+                                user2_trait_dict[trait2] += 1
                     for augment in participant['augments']:
                         if augment not in user2_augment_dict.keys():
                             user2_augment_dict[augment] = 1
                         else:
                             user2_augment_dict[augment] += 1
                     for unit in participant['units']:
-                        if unit['character_id'] not in user2_unit_dict.keys():
-                            user2_unit_dict[unit['character_id']] = 1
+                        champ = StaticInfo.get_champ_name(unit['character_id'])
+                        if champ not in user2_unit_dict.keys():
+                            user2_unit_dict[champ] = 1
                         else:
-                            user2_unit_dict[unit['character_id']] += 1
+                            user2_unit_dict[champ] += 1
                         if len(unit['itemNames']) == 3:
-                            if unit['character_id'] not in user2_carry_dict.keys():
-                                user2_carry_dict[unit['character_id']] = 1
+                            if champ not in user2_carry_dict.keys():
+                                user2_carry_dict[champ] = 1
                             else:
-                                user2_carry_dict[unit['character_id']] += 1
-                        for item in unit['itemNames']:
-                            if item not in user2_items_dict.keys():
-                                user2_items_dict[item] = 1
+                                user2_carry_dict[champ] += 1
+                        for item in unit['items']:
+                            item2 = StaticInfo.get_item_name(item)
+                            if item2 not in user2_items_dict.keys():
+                                user2_items_dict[item2] = 1
                             else:
-                                user2_items_dict[item] += 1
+                                user2_items_dict[item2] += 1
 
         user1_avg = round(mean(user1_placements), 2)
         user2_avg = round(mean(user2_placements), 2)
@@ -399,3 +404,8 @@ class GamesTogether(APIView):
             serializer.save()
             return Response(response_data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_406_NOT_ACCEPTABLE)
+
+
+class UnitImages(View):
+    def get(self, request, unit):
+        return render(request, 'units.html', {'unit': unit})
