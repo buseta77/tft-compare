@@ -11,6 +11,7 @@ from statistics import mean
 from django.shortcuts import render
 from django.http import FileResponse
 from datetime import datetime
+import re
 
 
 def convert_server(server_abbreviation):
@@ -127,6 +128,8 @@ class GamesTogether(APIView):
                             user1_augment_dict[augment] += 1
                     for unit in participant['units']:
                         champ = StaticInfo.get_champ_name(unit['character_id'])
+                        if champ == "Nomsy":
+                            continue
                         if champ not in user1_unit_dict.keys():
                             user1_unit_dict[champ] = 1
                         else:
@@ -136,12 +139,13 @@ class GamesTogether(APIView):
                                 user1_carry_dict[champ] = 1
                             else:
                                 user1_carry_dict[champ] += 1
-                        for item in unit['itemNames']:
+                        for item in unit['items']:
                             item2 = StaticInfo.get_item_name(item)
-                            if item2 not in user1_items_dict.keys():
-                                user1_items_dict[item2] = 1
-                            else:
-                                user1_items_dict[item2] += 1
+                            if item2:
+                                if item2 not in user1_items_dict.keys():
+                                    user1_items_dict[item2] = 1
+                                else:
+                                    user1_items_dict[item2] += 1
 
                 if participant['puuid'] == user2['puuid']:
                     user2_placements.append(participant['placement'])
@@ -173,6 +177,8 @@ class GamesTogether(APIView):
                             user2_augment_dict[augment] += 1
                     for unit in participant['units']:
                         champ = StaticInfo.get_champ_name(unit['character_id'])
+                        if champ == "Nomsy":
+                            continue
                         if champ not in user2_unit_dict.keys():
                             user2_unit_dict[champ] = 1
                         else:
@@ -184,10 +190,11 @@ class GamesTogether(APIView):
                                 user2_carry_dict[champ] += 1
                         for item in unit['items']:
                             item2 = StaticInfo.get_item_name(item)
-                            if item2 not in user2_items_dict.keys():
-                                user2_items_dict[item2] = 1
-                            else:
-                                user2_items_dict[item2] += 1
+                            if item2:
+                                if item2 not in user2_items_dict.keys():
+                                    user2_items_dict[item2] = 1
+                                else:
+                                    user2_items_dict[item2] += 1
 
         user1_avg = round(mean(user1_placements), 2)
         user2_avg = round(mean(user2_placements), 2)
@@ -207,14 +214,22 @@ class GamesTogether(APIView):
         user1_traits = []
         for i in range(len(user1_traits_raw.keys())):
             key = list(user1_traits_raw.keys())[i]
-            user1_traits.append({'name': key, 'count': user1_traits_raw[key]})
+            url_name = str(key).lower()
+            if key == 'Dragon':
+                url_name = 'dragons'
+            user1_traits.append({'name': key, 'count': user1_traits_raw[key],
+                                 'image': f'https://tft-comparing.herokuapp.com/static/traits/{url_name}.png'})
         user2_traits_raw = dict(reversed(sorted(user2_trait_dict.items(), key=lambda item: item[1])))
         while len(user2_traits_raw.keys()) > 5:
             del user2_traits_raw[list(user2_traits_raw.keys())[-1]]
         user2_traits = []
         for i in range(len(user2_traits_raw.keys())):
             key = list(user2_traits_raw.keys())[i]
-            user2_traits.append({'name': key, 'count': user2_traits_raw[key]})
+            url_name = str(key).lower()
+            if key == 'Dragon':
+                url_name = 'dragons'
+            user2_traits.append({'name': key, 'count': user2_traits_raw[key],
+                                 'image': f'https://tft-comparing.herokuapp.com/static/traits/{url_name}.png'})
 
         # user augments
         user1_augments_raw = dict(reversed(sorted(user1_augment_dict.items(), key=lambda item: item[1])))
@@ -223,14 +238,24 @@ class GamesTogether(APIView):
         user1_augments = []
         for i in range(len(user1_augments_raw.keys())):
             key = list(user1_augments_raw.keys())[i]
-            user1_augments.append({'name': key, 'count': user1_augments_raw[key]})
+            name_raw = str(key).replace('TFT6_Augment_', '').replace('TFT7_Augment_', '')
+            name_apart = re.findall('[A-Z][^A-Z]*', name_raw)
+            name = ' '.join(name_apart).replace("1", " I").replace("2", " II").replace("3", " III")
+            url_name = str(name).lower().replace(" ", "").replace("'", "")
+            user1_augments.append({'name': name, 'count': user1_augments_raw[key],
+                                   'image': f'https://tft-comparing.herokuapp.com/static/augments/{url_name}.png'})
         user2_augments_raw = dict(reversed(sorted(user2_augment_dict.items(), key=lambda item: item[1])))
         while len(user2_augments_raw.keys()) > 5:
             del user2_augments_raw[list(user2_augments_raw.keys())[-1]]
         user2_augments = []
         for i in range(len(user2_augments_raw.keys())):
             key = list(user2_augments_raw.keys())[i]
-            user2_augments.append({'name': key, 'count': user2_augments_raw[key]})
+            name_raw = str(key).replace('TFT6_Augment_', '').replace('TFT7_Augment_', '')
+            name_apart = re.findall('[A-Z][^A-Z]*', name_raw)
+            name = ' '.join(name_apart).replace("1", " I").replace("2", " II").replace("3", " III")
+            url_name = str(name).lower().replace(" ", "").replace("'", "")
+            user2_augments.append({'name': name, 'count': user2_augments_raw[key],
+                                   'image': f'https://tft-comparing.herokuapp.com/static/augments/{url_name}.png'})
 
         # user items
         user1_items_raw = dict(reversed(sorted(user1_items_dict.items(), key=lambda item: item[1])))
@@ -239,14 +264,18 @@ class GamesTogether(APIView):
         user1_items = []
         for i in range(len(user1_items_raw.keys())):
             key = list(user1_items_raw.keys())[i]
-            user1_items.append({'name': key, 'count': user1_items_raw[key]})
+            url_name = str(key).replace(' ', '').replace("'", "").replace(".", "").lower()
+            user1_items.append({'name': key, 'count': user1_items_raw[key],
+                                'image': f'https://tft-comparing.herokuapp.com/static/items/{url_name}.png'})
         user2_items_raw = dict(reversed(sorted(user2_items_dict.items(), key=lambda item: item[1])))
         while len(user2_items_raw.keys()) > 5:
             del user2_items_raw[list(user2_items_raw.keys())[-1]]
         user2_items = []
         for i in range(len(user2_items_raw.keys())):
             key = list(user2_items_raw.keys())[i]
-            user2_items.append({'name': key, 'count': user2_items_raw[key]})
+            url_name = str(key).replace(' ', '').replace("'", "").replace(".", "").lower()
+            user2_items.append({'name': key, 'count': user2_items_raw[key],
+                                'image': f'https://tft-comparing.herokuapp.com/static/items/{url_name}.png'})
 
         # user carriers
         user1_carriers_raw = dict(reversed(sorted(user1_carry_dict.items(), key=lambda item: item[1])))
@@ -255,14 +284,16 @@ class GamesTogether(APIView):
         user1_carriers = []
         for i in range(len(user1_carriers_raw.keys())):
             key = list(user1_carriers_raw.keys())[i]
-            user1_carriers.append({'name': key, 'count': user1_carriers_raw[key]})
+            user1_carriers.append({'name': key, 'count': user1_carriers_raw[key],
+                                   'image': f'https://tft-comparing.herokuapp.com/static/units/{str(key).lower()}.png'})
         user2_carriers_raw = dict(reversed(sorted(user2_carry_dict.items(), key=lambda item: item[1])))
         while len(user2_carriers_raw.keys()) > 5:
             del user2_carriers_raw[list(user2_carriers_raw.keys())[-1]]
         user2_carriers = []
         for i in range(len(user2_carriers_raw.keys())):
             key = list(user2_carriers_raw.keys())[i]
-            user2_carriers.append({'name': key, 'count': user2_carriers_raw[key]})
+            user2_carriers.append({'name': key, 'count': user2_carriers_raw[key],
+                                   'image': f'https://tft-comparing.herokuapp.com/static/units/{str(key).lower()}.png'})
 
         # user units
         user1_units_raw = dict(reversed(sorted(user1_unit_dict.items(), key=lambda item: item[1])))
@@ -271,14 +302,22 @@ class GamesTogether(APIView):
         user1_units = []
         for i in range(len(user1_units_raw.keys())):
             key = list(user1_units_raw.keys())[i]
-            user1_units.append({'name': key, 'count': user1_units_raw[key]})
+            url_name = str(key).lower().replace(' ', '')
+            if key == 'Nunu & Willump':
+                url_name = 'nunu'
+            user1_units.append({'name': key, 'count': user1_units_raw[key],
+                                'image': f'https://tft-comparing.herokuapp.com/static/units/{url_name}.png'})
         user2_units_raw = dict(reversed(sorted(user2_unit_dict.items(), key=lambda item: item[1])))
         while len(user2_units_raw.keys()) > 5:
             del user2_units_raw[list(user2_units_raw.keys())[-1]]
         user2_units = []
         for i in range(len(user2_units_raw.keys())):
             key = list(user2_units_raw.keys())[i]
-            user2_units.append({'name': key, 'count': user2_units_raw[key]})
+            url_name = str(key).lower().replace(' ', '')
+            if key == 'Nunu & Willump':
+                url_name = 'nunu'
+            user2_units.append({'name': key, 'count': user2_units_raw[key],
+                                'image': f'https://tft-comparing.herokuapp.com/static/units/{url_name}.png'})
 
         # detecting gold lefts
         user1_gold_left_avg = round(mean(user1_gold_left), 2)
@@ -404,8 +443,3 @@ class GamesTogether(APIView):
             serializer.save()
             return Response(response_data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_406_NOT_ACCEPTABLE)
-
-
-class UnitImages(View):
-    def get(self, request, unit):
-        return render(request, 'units.html', {'unit': unit})
