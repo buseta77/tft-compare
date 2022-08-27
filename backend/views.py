@@ -122,6 +122,8 @@ class GamesTogether(APIView):
                             else:
                                 user1_trait_dict[trait2] += 1
                     for augment in participant['augments']:
+                        if "Emblem" in augment:
+                            continue
                         if augment not in user1_augment_dict.keys():
                             user1_augment_dict[augment] = 1
                         else:
@@ -171,6 +173,8 @@ class GamesTogether(APIView):
                             else:
                                 user2_trait_dict[trait2] += 1
                     for augment in participant['augments']:
+                        if "Emblem" in augment:
+                            continue
                         if augment not in user2_augment_dict.keys():
                             user2_augment_dict[augment] = 1
                         else:
@@ -242,6 +246,8 @@ class GamesTogether(APIView):
             name_apart = re.findall('[A-Z][^A-Z]*', name_raw)
             name = ' '.join(name_apart).replace("1", " I").replace("2", " II").replace("3", " III")
             url_name = str(name).lower().replace(" ", "").replace("'", "")
+            if url_name == "jadeeternalprotection":
+                url_name = "eternalprotection"
             user1_augments.append({'name': name, 'count': user1_augments_raw[key],
                                    'image': f'https://tft-comparing.herokuapp.com/static/augments/{url_name}.png'})
         user2_augments_raw = dict(reversed(sorted(user2_augment_dict.items(), key=lambda item: item[1])))
@@ -254,6 +260,8 @@ class GamesTogether(APIView):
             name_apart = re.findall('[A-Z][^A-Z]*', name_raw)
             name = ' '.join(name_apart).replace("1", " I").replace("2", " II").replace("3", " III")
             url_name = str(name).lower().replace(" ", "").replace("'", "")
+            if url_name == "jadeeternalprotection":
+                url_name = "eternalprotection"
             user2_augments.append({'name': name, 'count': user2_augments_raw[key],
                                    'image': f'https://tft-comparing.herokuapp.com/static/augments/{url_name}.png'})
 
