@@ -284,16 +284,22 @@ class GamesTogether(APIView):
         user1_carriers = []
         for i in range(len(user1_carriers_raw.keys())):
             key = list(user1_carriers_raw.keys())[i]
+            url_name = str(key).lower().replace(' ', '')
+            if key == 'Nunu & Willump':
+                url_name = 'nunu'
             user1_carriers.append({'name': key, 'count': user1_carriers_raw[key],
-                                   'image': f'https://tft-comparing.herokuapp.com/static/units/{str(key).lower()}.png'})
+                                   'image': f'https://tft-comparing.herokuapp.com/static/units/{url_name}.png'})
         user2_carriers_raw = dict(reversed(sorted(user2_carry_dict.items(), key=lambda item: item[1])))
         while len(user2_carriers_raw.keys()) > 5:
             del user2_carriers_raw[list(user2_carriers_raw.keys())[-1]]
         user2_carriers = []
         for i in range(len(user2_carriers_raw.keys())):
             key = list(user2_carriers_raw.keys())[i]
+            url_name = str(key).lower().replace(' ', '')
+            if key == 'Nunu & Willump':
+                url_name = 'nunu'
             user2_carriers.append({'name': key, 'count': user2_carriers_raw[key],
-                                   'image': f'https://tft-comparing.herokuapp.com/static/units/{str(key).lower()}.png'})
+                                   'image': f'https://tft-comparing.herokuapp.com/static/units/{url_name}.png'})
 
         # user units
         user1_units_raw = dict(reversed(sorted(user1_unit_dict.items(), key=lambda item: item[1])))
