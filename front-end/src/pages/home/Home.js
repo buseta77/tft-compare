@@ -98,7 +98,8 @@ export default function Home() {
             setLoadingButton(true)
             setTextCheck(true)
             setDisableInputs(true)
-            const response = await axios.post("https://tft-comparing.herokuapp.com/compare/", {
+            const response = await axios.post("api/compare/", {
+            // https://tft-comparing.herokuapp.com
             // C9 k3soju    becca tilts
             username1: username, 
             username2: username2,
