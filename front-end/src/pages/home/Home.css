@@ -1,0 +1,476 @@
+.main {
+    display: flex;
+    min-height: 500px;
+    width: 100%;
+    flex: 1 1 100%;
+}
+.main1, .main3 {
+    flex: 1 2 100%;
+    color: white;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 280px;
+    transition: opacity 3.1s;
+    opacity: 0;
+}
+.main1-3-opa {
+    opacity:1;
+}
+.main1-3-opa2 {
+    opacity:0;
+}
+.main1 h1, .main3 h1{
+    margin-top: 6%;    
+    text-decoration: underline;
+}
+.main1 h3, .main3 h3{
+    margin-top: 10px;    
+}
+.main1 img, .main3 img{
+    width: 40%;
+    margin-top: 20px;    
+}
+.main2 {
+    flex: 1 1 85%;
+    min-width: 530px;
+    display: flex;
+    flex-direction: column;
+}
+.main2 .header {
+    flex: 1 1 17%;
+    text-align: center;
+    min-height: 130px;
+    display: flex;
+    flex-direction: column;
+    justify-content: end;
+    align-items: center;
+}
+.main2 .header select {
+    padding: 15px 50px;
+    font-size: 1em;
+    border: none; 
+    border-radius: 5px;
+    background-color: #eee;;
+    margin-bottom: 30px;
+    opacity: 0.8;
+}
+.main2 .header select:focus {
+    outline: none;
+}
+.main2 .middle {
+    flex: 1 1 62%;
+    position: relative;
+}
+.main2 .back-main {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    border: 2px solid transparent;
+}
+.back-main .user-back, .back-main .user2-back {
+    flex: 1 1 100%;
+    opacity: 0.8;
+    color: #eee;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+}
+.back-main .user-back .span, .back-main .user2-back .span {
+    margin-left: 2%;
+}
+.back-main .user-back h2, .back-main .user2-back h2{
+    text-decoration: underline;
+}
+.back-main .user-back h2:first-child, .back-main .user2-back h2:first-child{
+    font-size: 2.3em;
+    margin-bottom: 10px;
+    text-decoration: none;
+}
+.back-main .user-back .span h2, .back-main .user2-back .span h2 {
+    text-align: center;
+}
+.win{
+    background-color: rgb(38, 180, 38);
+}
+.lose {
+    background-color: #aa1e1e;
+}
+.tie {
+    background-color: rgb(190, 190, 30);
+}
+.main2 .front-main {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    border: 2px solid black;
+}
+.main2 .front-main-mode {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    border: 2px solid #0e1626;
+}
+.front-main .user-front, .front-main-mode .user-front {
+    flex: 1 1 100%;
+    background-image: url(../../logo/metal-door-left.jpg);
+    background-position: 50% 80%;
+    background-repeat: no-repeat;
+    background-size: cover;
+    display: flex;
+    justify-content: center;
+    transition: transform 1.4s cubic-bezier(0, 0, 0.73,-0.06) 0.8s;
+}
+.front-main .user-front-mode, .front-main-mode .user-front-mode {
+    flex: 1 1 100%;
+    background-image: url(../../logo/white-left.jpg);
+    background-position: 50% 80%;
+    background-repeat: no-repeat;
+    background-size: cover;
+    display: flex;
+    justify-content: center;
+    transition: transform 1.4s cubic-bezier(0, 0, 0.73,-0.06) 0.8s;
+}
+.front-main .user-front .input-container, .front-main-mode .user-front .input-container{
+    background-image: url(../../logo/paper.png);
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;
+    height: 50%;
+    width: 80%;
+    margin-top: 10%;
+    display: flex;
+    justify-content: center;
+}
+.front-main .user-front-mode .input-container, .front-main-mode .user-front-mode .input-container {
+    background-image: url(../../logo/sign-left.png);
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;
+    height: 50%;
+    width: 80%;
+    margin-top: 10%;
+    display: flex;
+    justify-content: center;
+}
+.front-main .user-front input, .front-main .user-front-mode input, .front-main-mode .user-front input, .front-main-mode .user-front-mode input {
+    padding: 10px 19px;
+    text-align: center;
+    margin: 17% 15%;
+    font-size: 1.3em;
+    height: 32%;
+    background-color: transparent;
+    border: 0;
+    border-radius: 5px;
+}
+.front-main .user-front input:focus, .front-main .user-front-mode input:focus, .front-main-mode .user-front input:focus, .front-main-mode .user-front-mode input:focus {
+    outline: none;
+}
+.front-main .user-front input::placeholder, .front-main .user-front-mode input::placeholder, .front-main-mode .user-front input::placeholder, .front-main-mode .user-front-mode input::placeholder {
+    color: rgba(0, 0, 0, 0.801);
+    font-size: 0.9em;
+}
+.front-main .user-front input:focus::placeholder, .front-main .user-front-mode input:focus::placeholder, .front-main-mode .user-front input:focus::placeholder, .front-main-mode .user-front-mode input:focus::placeholder{
+    color: transparent;
+}
+.front-main .user2-front, .front-main-mode .user2-front {
+    flex: 1 1 100%;
+    background-image: url(../../logo/metal-door-right.jpg);
+    background-position: 50% 80%;
+    background-repeat: no-repeat;
+    background-size: cover;
+    display: flex;
+    justify-content: center;
+    transition: transform 1.4s cubic-bezier(0, 0, 0.73,-0.06) 0.8s;
+}
+.front-main .user2-front-mode, .front-main-mode .user2-front-mode {
+    flex: 1 1 100%;
+    background-image: url(../../logo/white-right.jpg);
+    background-position: 50% 80%;
+    background-repeat: no-repeat;
+    background-size: cover;
+    display: flex;
+    justify-content: center;
+    transition: transform 1.4s cubic-bezier(0, 0, 0.73,-0.06) 0.8s;
+}
+.front-main .user2-front .input-container2, .front-main-mode .user2-front .input-container2{
+    background-image: url(../../logo/paper2.png);
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;
+    height: 50%;
+    width: 80%;
+    margin-top: 10%;
+    display: flex;
+    justify-content: center;
+}
+.front-main .user2-front-mode .input-container2, .front-main-mode .user2-front-mode .input-container2 {
+    background-image: url(../../logo/sign-right.png);
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;
+    height: 50%;
+    width: 80%;
+    margin-top: 10%;
+    display: flex;
+    justify-content: center 
+}
+.front-main .user2-front input,.front-main .user2-front-mode input, .front-main-mode .user2-front input,.front-main-mode .user2-front-mode input {
+    padding: 10px 19px;
+    text-align: center;
+    margin: 17% 15%;
+    font-size: 1.3em;
+    height: 32%;
+    background-color: transparent;
+    border: 0;
+    border-radius: 5px;
+}
+.front-main .user2-front input:focus, .front-main .user2-front-mode input:focus, .front-main-mode .user2-front input:focus, .front-main-mode .user2-front-mode input:focus {
+    outline: none;
+}
+.front-main .user2-front input::placeholder, .front-main .user2-front-mode input::placeholder, .front-main-mode .user2-front input::placeholder, .front-main-mode .user2-front-mode input::placeholder {
+    color: rgba(0, 0, 0, 0.801);
+    font-size: 0.9em;
+}
+.front-main .user2-front input:focus::placeholder, .front-main .user2-front-mode input:focus::placeholder, .front-main-mode .user2-front input:focus::placeholder, .front-main-mode .user2-front-mode input:focus::placeholder{
+    color: transparent;
+}
+.front-main .left, .front-main-mode .left {
+    transform: translateX(-101%);
+ }
+.front-main .right, .front-main-mode .right {
+     transform: translateX(101%);
+  }
+.main2 .errors {
+    flex: 1 1 5%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: end;
+    opacity: 0.8;
+}
+.main2 .errors .error-bg {
+    background-color: black;
+    color: rgb(11, 160, 90);
+}
+.main2 .errors .error-bg-red {
+    background-color: black;
+    color: rgb(189, 16, 16);
+}
+.main2 .errors .error-bg-yellow {
+    background-color: black;
+    color: rgb(11, 160, 90);
+}
+.main2 .errors .error-bg h4, .main2 .errors .error-bg-red h4 {
+    padding: 1px 10px;
+}
+.main2 .bottom {
+    flex: 1 1 19%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+.main2 .bottom .compare-btn {
+    padding: 20px 60px;
+    background-color: #4d0808;
+    color:#eee;
+    border-radius: 8px;
+    border: none;
+    font-size: 1.2em;
+    cursor: pointer;
+    opacity: 0.9;
+}
+.main2 .bottom .compare-btn:active {
+    transform: scale(0.9);
+}
+.main2 .bottom .detail-btn {
+    padding: 20px 60px;
+    background-color: #4d0808;
+    color:#eee;
+    border-radius: 8px;
+    border: none;
+    font-size: 1.2em;
+    cursor: pointer;
+    opacity: 0.9;
+}
+.main2 .bottom .detail-btn:active {
+    transform: scale(0.9);
+}
+.main2 .bottom .disable-btn {
+    padding: 20px 60px;
+    background-color: grey;
+    color:#eee;
+    border-radius: 8px;
+    border: none;
+    font-size: 1.2em;
+    cursor: not-allowed;
+    opacity: 0.9;
+}
+.main2 .bottom .disable-btn:active {
+    transform: scale(1.0);
+}
+.compare-again-btn {
+    padding: 20px 60px;
+    background-color: #eee;
+    border-radius: 8px;
+    border: none;
+    font-size: 1.2em;
+    cursor: pointer;
+    opacity: 0.9;
+    margin-bottom: 30px;
+}
+.compare-again-btn:active {
+    transform: scale(0.9);
+}
+.blue-bg {
+    background-color: #0e1626;
+}
+.black-bg {
+    background-color: black;
+}
+
+
+
+
+
+
+.navbar {
+    width: 100%;
+    padding: 20px 10px;
+    background: #870000;  /* fallback for old browsers */
+    background: -webkit-linear-gradient(to right, #190A05, #870000);  /* Chrome 10-25, Safari 5.1-6 */
+    background: linear-gradient(to right, #190A05, #870000); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
+    min-height: 75px;
+}
+.navbar ul {
+    display: flex;
+    margin: 0 auto;
+    max-width: 960px;
+    align-items: center;
+    list-style-type: none;
+}
+.navbar ul .title {
+    margin-right: auto;
+    font-weight: bold;
+    letter-spacing: 1px;
+    font-size: 1.2em;
+    color: white;
+}
+.navbar ul .title span {
+    color: white;
+}
+
+.navbar a {
+    margin-left: 16px;
+  }
+
+.navbar a {
+    color: #333;
+    text-decoration: none;
+}
+.toggle {
+    cursor: pointer;
+    display: inline-block;
+    margin-left: auto;
+    margin-right: 16px;
+    color: #eee;
+}
+.toggle2 {
+    cursor: pointer;
+    display: inline-block;
+    margin-right: 16px;
+    color: #eee;
+}
+.toggle-switch {
+    display: inline-block;
+    background: #110f0f;
+    border-radius: 16px;
+    width: 58px;
+    height: 32px;
+    position: relative;
+    vertical-align: middle;
+    transition: background 0.25s;
+}
+.toggle-switch:before, .toggle-switch:after {
+    content: "";
+}
+.toggle-switch:before {
+    display: block;
+    background: linear-gradient(to bottom, #fff 0%, #eee 100%);
+    border-radius: 50%;
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.25);
+    width: 24px;
+    height: 24px;
+    position: absolute;
+    top: 4px;
+    left: 4px;
+    transition: left 0.25s;
+}
+.toggle:hover .toggle-switch:before {
+    background: linear-gradient(to bottom, #fff 0%, #fff 100%);
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.5);
+}
+.toggle-checkbox:checked + .toggle-switch {
+    background:  #0a4863;
+}
+.toggle-checkbox:checked + .toggle-switch:before {
+    left: 30px;
+}
+.toggle-checkbox {
+    position: absolute;
+    visibility: hidden;
+}
+.toggle-label {
+    margin-left: 5px;
+    position: relative;
+    top: 2px;
+}
+.toggle-switch2 {
+    display: inline-block;
+    background: rgb(12, 117, 12);
+    border-radius: 16px;
+    width: 58px;
+    height: 32px;
+    position: relative;
+    vertical-align: middle;
+    transition: background 0.25s;
+}
+.toggle-switch2:before, .toggle-switch:after {
+    content: "";
+}
+.toggle-switch2:before {
+    display: block;
+    background: linear-gradient(to bottom, #fff 0%, #eee 100%);
+    border-radius: 50%;
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.25);
+    width: 24px;
+    height: 24px;
+    position: absolute;
+    top: 4px;
+    left: 4px;
+    transition: left 0.25s;
+}
+.toggle:hover .toggle-switch2:before {
+    background: linear-gradient(to bottom, #fff 0%, #fff 100%);
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.5);
+}
+.toggle-checkbox:checked + .toggle-switch2 {
+    background:  #9e0b0b;
+}
+.toggle-checkbox:checked + .toggle-switch2:before {
+    left: 30px;
+}
+.toggle-checkbox {
+    position: absolute;
+    visibility: hidden;
+}
+.toggle-label {
+    margin-left: 5px;
+    position: relative;
+    top: 2px;
+}
