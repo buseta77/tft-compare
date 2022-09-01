@@ -156,6 +156,7 @@ STATICFILES_STORAGE = "whitenoise.storage.CompressedStaticFilesStorage"
 
 CSRF_TRUSTED_ORIGINS = ["https://tft-comparing.herokuapp.com"]
 # CORS allow all origins below will be removed once backend&frontend on same domain
+CORS_ALLOW_ALL_ORIGINS = True
 
 
 # Test Runner Config
