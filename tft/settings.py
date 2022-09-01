@@ -66,7 +66,9 @@ ROOT_URLCONF = "tft.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
+        "DIRS": [
+            os.path.join(BASE_DIR, 'front-end/build')
+        ],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -143,7 +145,9 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATIC_URL = "static/"
 
 STATICFILES_DIRS = [
-    BASE_DIR / "static"
+    BASE_DIR / "static",
+    BASE_DIR / 'front-end' / 'build',
+    BASE_DIR / 'front-end' / 'build' / 'static'
 ]
 
 
