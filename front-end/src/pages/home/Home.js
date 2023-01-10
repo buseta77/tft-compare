@@ -335,7 +335,7 @@ export default function Home() {
                         <div className="back-main">
                             <div className={`user-back ${userWin ? "win": ""} ${user2Win ? "lose": ""} ${usersTie ? "tie": ""}`}>
                                 <div className="users-data">
-                                    {<h2>Avarage : </h2>}
+                                    {<h2>Average : </h2>}
                                     {<h2>Top Four : </h2>}
                                     {<h2>First Place : </h2>}
                                     {<h2>Last Place : </h2>}

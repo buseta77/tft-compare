@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <title>Document</title>
+</head>
+
+<body>
+    <h1 id="title">Testing something!!!</h1>
+    {% if image %}
+    <img src="{{image.image.url}}" id="image" height="300px">
+    <div class="row">
+        {% for elt in list %}
+        <div class="col-3" style="border: 1px solid;">{{elt}}</div>
+        {% endfor %}
+    </div>
+    <p>{{response.sender}}</p>
+    <p>{{response.sender_place_on_image}}</p>
+    <p>{{response.opponents}}</p>
+    {% endif %}
+    <form id="new_document_attachment" method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <input type="text" name="server">
+        <input type="text" name="username">
+        <input type="submit" value="Submit"/>
+    </form>
+</body>
+
+</html>

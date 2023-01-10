@@ -1,20 +1,79 @@
 import json
 import os
+
+import requests.exceptions
 from rest_framework.views import APIView, View
 from rest_framework.response import Response
 from rest_framework import status
 from riotwatcher import TftWatcher
 from backend.serializers import UsersComparedSerializer, MatchInfoSerializer
-from backend.models import UsersCompared, MatchInfo, StaticInfo
+from backend.models import UsersCompared, MatchInfo, StaticInfo, Screenshots
 from requests.exceptions import HTTPError
 from statistics import mean
-from django.shortcuts import render
-from django.http import FileResponse
+from django.shortcuts import render, redirect
+from django.http import FileResponse, HttpResponse
 from datetime import datetime
 import re
 from PIL import Image
 import pytesseract
 import numpy as np
+from backend.forms import ScreenshotForm
+from django.conf import settings
+
+
+# this will merge with Check8 at some point
+class FileTest(APIView):
+    def get(self, request):
+        form = ScreenshotForm()
+        return render(request, 'file_test.html', {'form': form})
+
+    def post(self, request):
+        form = ScreenshotForm(request.POST, request.FILES)
+        if form.is_valid():
+            form.save()
+            image = request.FILES['image']
+            path = settings.MEDIA_ROOT
+            pathz = str(path) + "/images/" + str(image)
+            pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
+            im = Image.open(pathz)
+            width, height = im.size
+            x_start = 0.215
+            x_end = 0.337
+            y1_start = 0.449
+            y1_end = 0.47
+            y2_start = 0.948
+            y2_end = 0.9715
+            x_jump = 0.15
+
+            username_list = []
+            i = 0
+            left, right = round(width * x_start), round(width * x_end)
+            while i < 4:
+                crop_rectangle = (left, round(y1_start * height), right, round(y1_end * height))
+                cropped_im = im.crop(crop_rectangle)
+                img1 = np.array(cropped_im)
+                text = pytesseract.image_to_string(img1)
+                left += width * x_jump
+                right += width * x_jump
+                i += 1
+                username_list.append(text.strip())
+            j = 0
+            left, right = round(width * x_start), round(width * x_end)
+            while j < 4:
+                crop_rectangle = (left, round(y2_start * height), right, round(y2_end * height))
+                cropped_im = im.crop(crop_rectangle)
+                img1 = np.array(cropped_im)
+                text = pytesseract.image_to_string(img1)
+                left += width * x_jump
+                right += width * x_jump
+                j += 1
+                username_list.append(text.strip())
+
+            image = Screenshots.objects.all().last()
+            form = ScreenshotForm()
+            return render(request, "file_test.html", {'image': image, 'form': form, 'list': username_list})
+        form = ScreenshotForm()
+        return render(request, 'file_test.html', {'form': form})
 
 
 def convert_server(server_abbreviation):
@@ -47,10 +106,25 @@ def convert(trait, no):
         return no
 
 
-# Create your views here
 class Home(View):
     def get(self, request):
         return render(request, 'home.html')
+
+
+class PreviousSearch(APIView):
+    def get(self, request):
+        compared = request.session['compared']
+        if compared:
+            response = {'previous_search': []}
+            for cid in compared:
+                compared_data = UsersCompared.get_compared(cid)
+                response['previous_search'].append({
+                    'username1': compared_data.username1,
+                    'username2': compared_data.username2,
+                    'server': compared_data.server,
+                    'compared_at': compared_data.compared_at})
+            return Response(response, status=status.HTTP_200_OK)
+        return Response({}, status=status.HTTP_200_OK)
 
 
 class GamesTogether(APIView):
@@ -61,7 +135,7 @@ class GamesTogether(APIView):
 
     def post(self, request):
         users_data = request.data
-        watcher = TftWatcher(os.environ.get("RIOT_KEY"))
+        watcher = TftWatcher(os.environ.get('RIOT_KEY'))
 
         try:
             user1 = watcher.summoner.by_name(users_data['server'], users_data['username1'])
@@ -87,6 +161,9 @@ class GamesTogether(APIView):
         user1_augment_dict, user2_augment_dict = {}, {}
         user1_items_dict, user2_items_dict = {}, {}
         user1_unit_dict, user1_carry_dict, user2_unit_dict, user2_carry_dict = {}, {}, {}, {}
+        champ_data = StaticInfo.get_champ_data()
+        item_data = StaticInfo.get_item_data()
+        trait_data = StaticInfo.get_trait_data()
 
         for elt in common_match_list:
             game = MatchInfo.game_exists(elt, convert_server(users_data['server']))
@@ -105,9 +182,9 @@ class GamesTogether(APIView):
                     user1_placements.append(participant['placement'])
                     if participant['placement'] == 1:
                         user1_first += 1
-                    if participant['placement'] < 5:
+                    elif participant['placement'] < 5:
                         user1_top4 += 1
-                    if participant['placement'] == 8:
+                    elif participant['placement'] == 8:
                         user1_eight += 1
                     user1_gold_left.append(participant['gold_left'])
                     if participant['gold_left'] <= 5:
@@ -119,7 +196,7 @@ class GamesTogether(APIView):
                     user1_total_damage_list.append(participant['total_damage_to_players'])
                     for trait in participant['traits']:
                         if trait['tier_current'] > 0:
-                            trait2 = StaticInfo.get_trait_name(trait['name'])
+                            trait2 = StaticInfo.get_trait_name(trait_data, trait['name'])
                             if trait2 not in user1_trait_dict.keys():
                                 user1_trait_dict[trait2] = 1
                             else:
@@ -132,7 +209,7 @@ class GamesTogether(APIView):
                         else:
                             user1_augment_dict[augment] += 1
                     for unit in participant['units']:
-                        champ = StaticInfo.get_champ_name(unit['character_id'])
+                        champ = StaticInfo.get_champ_name(champ_data, unit['character_id'])
                         if champ == "Nomsy":
                             continue
                         if champ not in user1_unit_dict.keys():
@@ -145,20 +222,20 @@ class GamesTogether(APIView):
                             else:
                                 user1_carry_dict[champ] += 1
                         for item in unit['items']:
-                            item2 = StaticInfo.get_item_name(item)
+                            item2 = StaticInfo.get_item_name(item_data, item)
                             if item2:
                                 if item2 not in user1_items_dict.keys():
                                     user1_items_dict[item2] = 1
                                 else:
                                     user1_items_dict[item2] += 1
 
-                if participant['puuid'] == user2['puuid']:
+                elif participant['puuid'] == user2['puuid']:
                     user2_placements.append(participant['placement'])
                     if participant['placement'] == 1:
                         user2_first += 1
-                    if participant['placement'] < 5:
+                    elif participant['placement'] < 5:
                         user2_top4 += 1
-                    if participant['placement'] == 8:
+                    elif participant['placement'] == 8:
                         user2_eight += 1
                     user2_gold_left.append(participant['gold_left'])
                     if participant['gold_left'] <= 5:
@@ -170,7 +247,7 @@ class GamesTogether(APIView):
                     user2_total_damage_list.append(participant['total_damage_to_players'])
                     for trait in participant['traits']:
                         if trait['tier_current'] > 0:
-                            trait2 = StaticInfo.get_trait_name(trait['name'])
+                            trait2 = StaticInfo.get_trait_name(trait_data, trait['name'])
                             if trait2 not in user2_trait_dict.keys():
                                 user2_trait_dict[trait2] = 1
                             else:
@@ -183,7 +260,7 @@ class GamesTogether(APIView):
                         else:
                             user2_augment_dict[augment] += 1
                     for unit in participant['units']:
-                        champ = StaticInfo.get_champ_name(unit['character_id'])
+                        champ = StaticInfo.get_champ_name(champ_data, unit['character_id'])
                         if champ == "Nomsy":
                             continue
                         if champ not in user2_unit_dict.keys():
@@ -196,7 +273,7 @@ class GamesTogether(APIView):
                             else:
                                 user2_carry_dict[champ] += 1
                         for item in unit['items']:
-                            item2 = StaticInfo.get_item_name(item)
+                            item2 = StaticInfo.get_item_name(item_data, item)
                             if item2:
                                 if item2 not in user2_items_dict.keys():
                                     user2_items_dict[item2] = 1
@@ -211,6 +288,8 @@ class GamesTogether(APIView):
         user2_eliminate_rate = round(sum(user2_eliminated_list) / sum(user2_max_eliminated), 2)
         user1_damage_dealt_avg = round(mean(user1_total_damage_list), 2)
         user2_damage_dealt_avg = round(mean(user2_total_damage_list), 2)
+        user1_damage_total = sum(user1_total_damage_list)
+        user2_damage_total = sum(user2_total_damage_list)
         avg_length = round(mean(match_lengths), 2)
         played_together = len(common_match_list)
 
@@ -422,6 +501,7 @@ class GamesTogether(APIView):
                                 'how_many_eliminated': user1_eliminated_avg,
                                 'eliminate_rate': user1_eliminate_rate,
                                 'damage_dealt_avg': user1_damage_dealt_avg,
+                                'damage_total': user1_damage_total,
                                 'pp': f'https://ddragon.leagueoflegends.com/cdn/12.13.1/img/profileicon/{user1["profileIconId"]}.png',
                                 'level': user1['summonerLevel'],
                                 'username': users_data['username1'],
@@ -444,6 +524,7 @@ class GamesTogether(APIView):
                                 'how_many_eliminated': user2_eliminated_avg,
                                 'eliminate_rate': user2_eliminate_rate,
                                 'damage_dealt_avg': user2_damage_dealt_avg,
+                                'damage_total': user2_damage_total,
                                 'pp': f'https://ddragon.leagueoflegends.com/cdn/12.13.1/img/profileicon/{user2["profileIconId"]}.png',
                                 'level': user2['summonerLevel'],
                                 'username': users_data['username2'],
@@ -458,108 +539,129 @@ class GamesTogether(APIView):
         serializer = UsersComparedSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
+            if 'compared' not in request.session:
+                request.session['compared'] = []
+            request.session['compared'].append(serializer.data['id'])
             return Response(response_data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_406_NOT_ACCEPTABLE)
 
 
 # data will have: username, server, image
-class CheckEight(APIView):
+class CheckEight(View):
+    def get(self, request):
+        form = ScreenshotForm()
+        return render(request, 'file_test.html', {'form': form})
+
     def post(self, request):
-        pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
+        form = ScreenshotForm(request.POST, request.FILES)
+        data = request.POST
+        if form.is_valid():
+            form.save()
+            image = request.FILES['image']
+            path = settings.MEDIA_ROOT
+            pathz = str(path) + "/images/" + str(image).replace(" ", "_")
+            pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
+            im = Image.open(pathz)
+            width, height = im.size
+            x_start = 0.215
+            x_end = 0.337
+            y1_start = 0.449
+            y1_end = 0.47
+            y2_start = 0.948
+            y2_end = 0.9715
+            x_jump = 0.15
 
-        data = request.data
-        # filename = 'macartpalette.png'
-        im = Image.open(data['image'])
-        width, height = im.size
-        x_start = 0.215
-        x_end = 0.337
-        y1_start = 0.449
-        y1_end = 0.47
-        y2_start = 0.948
-        y2_end = 0.9715
-        x_jump = 0.15
+            username_list = []
+            i = 0
+            left, right = round(width * x_start), round(width * x_end)
+            while i < 4:
+                crop_rectangle = (left, round(y1_start * height), right, round(y1_end * height))
+                cropped_im = im.crop(crop_rectangle)
+                img1 = np.array(cropped_im)
+                text = pytesseract.image_to_string(img1)
+                left += width * x_jump
+                right += width * x_jump
+                i += 1
+                username_list.append(text.strip())
+            j = 0
+            left, right = round(width * x_start), round(width * x_end)
+            while j < 4:
+                crop_rectangle = (left, round(y2_start * height), right, round(y2_end * height))
+                cropped_im = im.crop(crop_rectangle)
+                img1 = np.array(cropped_im)
+                text = pytesseract.image_to_string(img1)
+                left += width * x_jump
+                right += width * x_jump
+                j += 1
+                username_list.append(text.strip())
 
-        username_list = []
-        i = 0
-        left, right = round(width * x_start), round(width * x_end)
-        while i < 4:
-            crop_rectangle = (left, round(y1_start * height), right, round(y1_end * height))
-            cropped_im = im.crop(crop_rectangle)
-            img1 = np.array(cropped_im)
-            text = pytesseract.image_to_string(img1)
-            left += width * x_jump
-            right += width * x_jump
-            i += 1
-            username_list.append(text.strip())
+            image = Screenshots.objects.all().last()
+            form = ScreenshotForm()
 
-        j = 0
-        left, right = round(width * x_start), round(width * x_end)
-        while j < 4:
-            crop_rectangle = (left, round(y2_start * height), right, round(y2_end * height))
-            cropped_im = im.crop(crop_rectangle)
-            img1 = np.array(cropped_im)
-            text = pytesseract.image_to_string(img1)
-            left += width * x_jump
-            right += width * x_jump
-            j += 1
-            username_list.append(text.strip())
+            if len(username_list) != 8:
+                return render(request, 'file_test.html', {'form': form})
 
-        if len(username_list) != 8:
-            return Response({}, status=status.HTTP_406_NOT_ACCEPTABLE)
+            watcher = TftWatcher(os.environ.get("RIOT_KEY"))
+            sender = watcher.summoner.by_name(data['server'], data['username'])
+            sender_match_list = watcher.match.by_puuid(convert_server(data['server']), sender['puuid'], count=200)
+            averages = []
+            sender_place = 0
+            for (i, user) in enumerate(username_list):
+                if user == data['username']:
+                    sender_place = i + 1
+            if sender_place == 0:
+                print(username_list)
+                return render(request, 'file_test.html', {'form': form})
 
-        watcher = TftWatcher(os.environ.get("RIOT_KEY"))
-        sender = watcher.summoner.by_name(data['server'], data['username'])
-        sender_match_list = watcher.match.by_puuid(convert_server(data['server']), sender['puuid'], count=200)
-        averages = []
-        sender_place = 0
-        for (i, user) in enumerate(username_list):
-            if user == data['username']:
-                sender_place = i + 1
-        if sender_place == 0:
-            return Response({}, status=status.HTTP_406_NOT_ACCEPTABLE)
+            for (i, user) in enumerate(username_list):
+                if user == data['username']:
+                    continue
+                try:
+                    summoner = watcher.summoner.by_name(data['server'], user)
+                except requests.exceptions.HTTPError:
+                    continue
+                summoner_match_list = watcher.match.by_puuid(convert_server(data['server']), summoner['puuid'],
+                                                             count=200)
+                common_match_list = list(set(sender_match_list).intersection(summoner_match_list))
+                if not common_match_list:
+                    averages.append((None, None, user))
+                    continue
+                user1_placements, user2_placements = [], []
+                for elt in common_match_list:
+                    game = MatchInfo.game_exists(elt, convert_server(data['server']))
+                    if game:
+                        match = json.loads(game)
+                    else:
+                        match = watcher.match.by_id(convert_server(data['server']), elt)
+                        new_match = {'match_id': str(elt), 'server': str(convert_server(data['server'])),
+                                     'match_data': json.dumps(match), 'created_at': datetime.utcnow()}
+                        new_match_serializer = MatchInfoSerializer(data=new_match)
+                        if new_match_serializer.is_valid():
+                            new_match_serializer.save()
+                    for participant in match['info']['participants']:
+                        if participant['puuid'] == sender['puuid']:
+                            user1_placements.append(participant['placement'])
+                        if participant['puuid'] == summoner['puuid']:
+                            user2_placements.append(participant['placement'])
+                user1_avg = round(mean(user1_placements), 2)
+                user2_avg = round(mean(user2_placements), 2)
+                averages.append((user1_avg, user2_avg, user))
 
-        for (i, user) in enumerate(username_list):
-            if user == data['username']:
-                continue
-            summoner = watcher.summoner.by_name(data['server'], user)
-            summoner_match_list = watcher.match.by_puuid(convert_server(data['server']), summoner['puuid'], count=200)
-            common_match_list = list(set(sender_match_list).intersection(summoner_match_list))
-            if not common_match_list:
-                averages.append((None, None, user))
-                continue
-            user1_placements, user2_placements = [], []
-            for elt in common_match_list:
-                game = MatchInfo.game_exists(elt, convert_server(data['server']))
-                if game:
-                    match = json.loads(game)
-                else:
-                    match = watcher.match.by_id(convert_server(data['server']), elt)
-                    new_match = {'match_id': str(elt), 'server': str(convert_server(data['server'])),
-                                 'match_data': json.dumps(match), 'created_at': datetime.utcnow()}
-                    new_match_serializer = MatchInfoSerializer(data=new_match)
-                    if new_match_serializer.is_valid():
-                        new_match_serializer.save()
-                for participant in match['info']['participants']:
-                    if participant['puuid'] == sender['puuid']:
-                        user1_placements.append(participant['placement'])
-                    if participant['puuid'] == summoner['puuid']:
-                        user2_placements.append(participant['placement'])
-            user1_avg = round(mean(user1_placements), 2)
-            user2_avg = round(mean(user2_placements), 2)
-            averages.append((user1_avg, user2_avg, user))
-
-        json_pieces = []
-        for elt in averages:
-            json_pieces.append({"summoner": elt[2],
-                                "summoner_avg": elt[1],
-                                "sender_avg": elt[0]})
-        response_data = {
-            "sender": data['username'],
-            "sender_place_on_image": sender_place,
-            "opponents": json_pieces}
-        return Response(response_data, status=status.HTTP_200_OK)
+            json_pieces = []
+            for elt in averages:
+                json_pieces.append({"summoner": elt[2],
+                                    "summoner_avg": elt[1],
+                                    "sender_avg": elt[0]})
+            response_data = {
+                "sender": data['username'],
+                "sender_place_on_image": sender_place,
+                "opponents": json_pieces}
+            return render(request, "file_test.html", {'image': image, 'form': form, 'response': response_data})
+        form = ScreenshotForm()
+        return render(request, 'file_test.html', {'form': form})
 
 
+# in case api key does not work, this is a dummy for receiving test data
 class Example(APIView):
     def get(self, request):
         return Response({"example": "yes"}, status=status.HTTP_200_OK)

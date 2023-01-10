@@ -18,11 +18,14 @@ from django.urls import path, include, re_path
 from django.conf.urls.static import static
 from django.conf import settings
 from django.views.generic import TemplateView
+from backend.views import CheckEight
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
     path('api/', include('backend.urls')),
+    path('check8/', CheckEight.as_view(), name='check8'),
     path('', TemplateView.as_view(template_name='index.html')),
     path('riot.txt', TemplateView.as_view(template_name='riot.txt',
                                           content_type='text/plain')),
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+
+urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
